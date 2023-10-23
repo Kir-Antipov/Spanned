@@ -1,6 +1,35 @@
 {
   "version": "2.0.0",
   "tasks": [
+    {
+      "label": "build",
+      "isBuildCommand": true,
+      "command": "dotnet",
+      "type": "process",
+      "args": [
+        "build",
+        "${workspaceFolder}/Spanned.sln",
+        "-tl",
+        "/property:GenerateFullPaths=true",
+        "/consoleloggerparameters:NoSummary",
+      ],
+      "problemMatcher": "$msCompile",
+    },
+    {
+      "label": "pack",
+      "command": "dotnet",
+      "type": "process",
+      "args": [
+        "pack",
+        "${workspaceFolder}/Spanned.sln",
+        "-tl",
+        "-c",
+        "Release",
+        "/property:GenerateFullPaths=true",
+        "/consoleloggerparameters:NoSummary",
+      ],
+      "problemMatcher": "$msCompile",
+    },
   ],
   "inputs": [
   ],
