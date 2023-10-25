@@ -1,0 +1,32 @@
+<Project>
+
+  <PropertyGroup>
+    <IsAotCompatible Condition="'$(IsPackable)' == 'true' And $([MSBuild]::IsTargetFrameworkCompatible('$(TargetFramework)', 'net8.0'))">true</IsAotCompatible>
+  </PropertyGroup>
+
+  <PropertyGroup>
+    <Company>$(Authors)</Company>
+    <Copyright>Copyright © $(ReleaseYear) $(Authors)</Copyright>
+    <Copyright Condition="'$([System.DateTime]::Now.Year)' != '$(ReleaseYear)'">Copyright © $(ReleaseYear)-$([System.DateTime]::Now.Year) $(Authors)</Copyright>
+  </PropertyGroup>
+
+  <PropertyGroup Condition="'$(IsPackable)' == 'true'">
+    <PackageReadmeFile>README.md</PackageReadmeFile>
+    <PackageLicenseFile>LICENSE.md</PackageLicenseFile>
+    <PackageIcon>icon.png</PackageIcon>
+    <GeneratePackageOnBuild>false</GeneratePackageOnBuild>
+    <GenerateDocumentationFile>true</GenerateDocumentationFile>
+    <EnablePackageValidation>true</EnablePackageValidation>
+  </PropertyGroup>
+
+  <ItemGroup Condition="'$(IsPackable)' == 'true'">
+    <PackageReference Include="DotNet.ReproducibleBuilds" Version="1.1.1" PrivateAssets="All" />
+  </ItemGroup>
+
+  <ItemGroup Condition="'$(IsPackable)' == 'true'">
+    <None Include="$(MSBuildThisFileDirectory)README.md" Pack="true" PackagePath="" Visible="false" />
+    <None Include="$(MSBuildThisFileDirectory)LICENSE.md" Pack="true" PackagePath="" Visible="false" />
+    <None Include="$(MSBuildThisFileDirectory)media/icon.png" Pack="true" PackagePath="" Visible="false" />
+  </ItemGroup>
+
+</Project>
