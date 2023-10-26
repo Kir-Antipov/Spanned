@@ -1,0 +1,52 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <TargetFrameworks>net8.0</TargetFrameworks>
+  </PropertyGroup>
+
+  <PropertyGroup>
+    <IsPackable>true</IsPackable>
+    <Description>A high-performance, zero-allocation .NET library that introduces span-compatible alternatives to popular BCL types and provides vectorized solutions for common operations on spans.</Description>
+    <PackageTags>span readonlyspan memory vectorization performance zero-allocation zero allocation net</PackageTags>
+  </PropertyGroup>
+
+  <PropertyGroup>
+    <GenerateDocumentationFile>true</GenerateDocumentationFile> <!-- Who the duck broke these properties? -->
+    <EnablePackageValidation>true</EnablePackageValidation>     <!-- They no longer work if defined in `.targets` -->
+  </PropertyGroup>
+
+  <PropertyGroup>
+    <!-- IDE0004: Remove unnecessary cast. -->
+    <!-- Ignore the rule in this project to help JIT & improve code readability. -->
+    <NoWarn>$(NoWarn);IDE0004</NoWarn>
+
+    <!-- IDE0038: Cast expression is not saved into a local variable. -->
+    <!-- Ignore the rule to help JIT de-virtualize method calls on value types. -->
+    <NoWarn>$(NoWarn);IDE0038</NoWarn>
+
+    <!-- CS0809: Obsolete member 'memberA' overrides non-obsolete member 'memberB'. -->
+    <!-- Obsoleting `Equals` & `GetHasCode` on ref structs is a false positive, -->
+    <!-- which happens a lot in this project. Therefore, ignore it. -->
+    <NoWarn>$(NoWarn);CS0809</NoWarn>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <Using Include="Spanned.Helpers" />
+    <Using Include="System.Buffers" />
+    <Using Include="System.ComponentModel" />
+    <Using Include="System.Diagnostics" />
+    <Using Include="System.Diagnostics.CodeAnalysis" />
+    <Using Include="System.Numerics" />
+    <Using Include="System.Runtime.CompilerServices" />
+    <Using Include="System.Runtime.InteropServices" />
+    <Using Include="System.Runtime.Intrinsics" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <!-- [assembly: CLSCompliant(true)] -->
+    <AssemblyAttribute Include="System.CLSCompliantAttribute">
+      <_Parameter1>true</_Parameter1>
+    </AssemblyAttribute>
+  </ItemGroup>
+
+</Project>
