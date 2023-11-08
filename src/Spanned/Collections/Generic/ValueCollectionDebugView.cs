@@ -22,6 +22,16 @@ internal sealed class ValueCollectionDebugView<T>
     }
 
     /// <summary>
+    /// Initializes a new instance of the <see cref="ValueCollectionDebugView{T}"/> class
+    /// using a <see cref="ValueStack{T}"/>.
+    /// </summary>
+    /// <param name="stack">The <see cref="ValueStack{T}"/> to be represented in the debug view.</param>
+    public ValueCollectionDebugView(ValueStack<T> stack)
+    {
+        _items = stack.DebuggerItems;
+    }
+
+    /// <summary>
     /// The items represented in the debug view.
     /// </summary>
     [DebuggerBrowsable(DebuggerBrowsableState.RootHidden)]
