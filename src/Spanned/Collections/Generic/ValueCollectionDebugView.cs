@@ -42,6 +42,16 @@ internal sealed class ValueCollectionDebugView<T>
     }
 
     /// <summary>
+    /// Initializes a new instance of the <see cref="ValueCollectionDebugView{T}"/> class
+    /// using a <see cref="ValueQueue{T}"/>.
+    /// </summary>
+    /// <param name="queue">The <see cref="ValueQueue{T}"/> to be represented in the debug view.</param>
+    public ValueCollectionDebugView(ValueQueue<T> queue)
+    {
+        _items = queue.DebuggerItems;
+    }
+
+    /// <summary>
     /// The items represented in the debug view.
     /// </summary>
     [DebuggerBrowsable(DebuggerBrowsableState.RootHidden)]
