@@ -32,6 +32,16 @@ internal sealed class ValueCollectionDebugView<T>
     }
 
     /// <summary>
+    /// Initializes a new instance of the <see cref="ValueCollectionDebugView{T}"/> class
+    /// using a <see cref="ValueSet{T}"/>.
+    /// </summary>
+    /// <param name="set">The <see cref="ValueSet{T}"/> to be represented in the debug view.</param>
+    public ValueCollectionDebugView(ValueSet<T> set)
+    {
+        _items = set.DebuggerItems;
+    }
+
+    /// <summary>
     /// The items represented in the debug view.
     /// </summary>
     [DebuggerBrowsable(DebuggerBrowsableState.RootHidden)]
