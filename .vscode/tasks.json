@@ -30,6 +30,22 @@
       ],
       "problemMatcher": "$msCompile",
     },
+    {
+      "label": "run:tests",
+      "isTestCommand": true,
+      "command": "dotnet",
+      "type": "process",
+      "args": [
+        "test",
+        "-tl",
+        "-c",
+        "Release",
+      ],
+      "problemMatcher": "$msCompile",
+      "options": {
+        "cwd": "${workspaceFolder}",
+      },
+    },
   ],
   "inputs": [
   ],
