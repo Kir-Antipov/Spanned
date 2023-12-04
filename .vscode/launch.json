@@ -2,6 +2,19 @@
   "version": "0.2.0",
   "configurations": [
     {
+      "name": ".NET Launch (Debug)",
+      "type": "coreclr",
+      "request": "launch",
+      "preLaunchTask": "build",
+      "program": "${workspaceFolder}/tests/Spanned.Benchmarks/bin/Debug/net8.0/Spanned.Benchmarks.dll",
+      "args": [
+        "--filter",
+        "*",
+      ],
+      "cwd": "${workspaceFolder}/tests/Spanned.Benchmarks",
+      "console": "internalConsole",
+    },
+    {
       "name": ".NET Attach",
       "type": "coreclr",
       "request": "attach",
