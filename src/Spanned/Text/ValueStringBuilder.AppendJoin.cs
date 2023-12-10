@@ -207,7 +207,7 @@ public ref partial struct ValueStringBuilder
         Debug.Assert(separatorLength >= 0);
         Debug.Assert(values is not null);
 
-        using IEnumerator<T> en = values.GetEnumerator();
+        using IEnumerator<T> en = values!.GetEnumerator();
         if (!en.MoveNext())
         {
             return;

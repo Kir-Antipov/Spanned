@@ -40,7 +40,6 @@ public ref struct ValueStack<T>
     /// is empty and has the specified initial capacity.
     /// </summary>
     /// <param name="capacity">The number of elements that the new stack can initially store.</param>
-    /// <inheritdoc cref="ThrowHelper.ThrowArgumentOutOfRangeException_IfInvalidCapacity(int)"/>
     public ValueStack(int capacity)
     {
         _rentedBuffer = ArrayPool<T>.Shared.Rent(capacity);
@@ -65,7 +64,6 @@ public ref struct ValueStack<T>
     /// </summary>
     /// <param name="collection">The collection whose elements are copied to the new stack.</param>
     /// <param name="capacity">The number of elements that the new stack can initially store.</param>
-    /// <inheritdoc cref="ThrowHelper.ThrowArgumentOutOfRangeException_IfInvalidCapacity(int, int)"/>
     public ValueStack(scoped ReadOnlySpan<T> collection, int capacity)
     {
         ThrowHelper.ThrowArgumentOutOfRangeException_IfInvalidCapacity(capacity, collection.Length);
@@ -123,7 +121,7 @@ public ref struct ValueStack<T>
     /// <param name="stack">The stack to be converted.</param>
     /// <returns>A span covering the content of the <see cref="ValueStack{T}"/>.</returns>
     public static implicit operator ReadOnlySpan<T>(ValueStack<T> stack)
-        => MemoryMarshal.CreateReadOnlySpan(ref Unsafe.Add(ref MemoryMarshal.GetReference(stack._buffer), stack._buffer.Length - stack._count), stack._count);
+        => stack._buffer.Slice(stack._buffer.Length - stack._count, stack._count);
 
     /// <summary>
     /// Returns a span that represents the content of the <see cref="ValueStack{T}"/>.
@@ -133,7 +131,7 @@ public ref struct ValueStack<T>
     /// </remarks>
     /// <returns>A span covering the content of the <see cref="ValueStack{T}"/>.</returns>
     public readonly Span<T> AsSpan()
-        => MemoryMarshal.CreateSpan(ref Unsafe.Add(ref MemoryMarshal.GetReference(_buffer), _buffer.Length - _count), _count);
+        => _buffer.Slice(_buffer.Length - _count, _count);
 
     /// <summary>
     /// Returns a span that represents a segment of the stack starting from the specified index.
@@ -144,7 +142,6 @@ public ref struct ValueStack<T>
     /// </remarks>
     /// <param name="start">The start index of the segment.</param>
     /// <returns>A span covering the segment of the stack.</returns>
-    /// <inheritdoc cref="ThrowHelper.ThrowArgumentOutOfRangeException_IfInvalidRange(int, int)"/>
     public readonly Span<T> AsSpan(int start) => AsSpan(start, _count - start);
 
     /// <summary>
@@ -157,13 +154,11 @@ public ref struct ValueStack<T>
     /// <param name="start">The start index of the segment.</param>
     /// <param name="length">The length of the segment.</param>
     /// <returns>A span covering the segment of the stack.</returns>
-    /// <inheritdoc cref="ThrowHelper.ThrowArgumentOutOfRangeException_IfInvalidRange(int, int, int)"/>
     public readonly Span<T> AsSpan(int start, int length)
     {
         ThrowHelper.ThrowArgumentOutOfRangeException_IfInvalidRange(start, length, _count);
 
-        // Skip additional bound checks.
-        return MemoryMarshal.CreateSpan(ref Unsafe.Add(ref MemoryMarshal.GetReference(_buffer), _buffer.Length - _count + start), length);
+        return _buffer.Slice(_buffer.Length - _count + start, length);
     }
 
     /// <summary>
@@ -191,7 +186,6 @@ public ref struct ValueStack<T>
     /// <summary>
     /// The number of elements contained in the <see cref="ValueStack{T}"/>.
     /// </summary>
-    /// <inheritdoc cref="ThrowHelper.ThrowArgumentOutOfRangeException_IfInvalidCount(int, int)"/>
     public int Count
     {
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
@@ -208,7 +202,6 @@ public ref struct ValueStack<T>
     /// The total number of elements the internal data structure can hold
     /// without resizing.
     /// </summary>
-    /// <inheritdoc cref="ThrowHelper.ThrowArgumentOutOfRangeException_IfInvalidCapacity(int, int)"/>
     public int Capacity
     {
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
@@ -233,7 +226,6 @@ public ref struct ValueStack<T>
     /// </remarks>
     /// <param name="index">The zero-based index of the element to get or set.</param>
     /// <returns>The element at the specified index.</returns>
-    /// <inheritdoc cref="ThrowHelper.ThrowArgumentOutOfRangeException_IfInvalidIndex(int, int)"/>
     public readonly ref T this[int index]
     {
         get
@@ -270,7 +262,6 @@ public ref struct ValueStack<T>
     /// </summary>
     /// <returns>The new capacity of this stack.</returns>
     /// <param name="capacity">The minimum capacity to ensure.</param>
-    /// <inheritdoc cref="ThrowHelper.ThrowArgumentOutOfRangeException_IfInvalidCapacity(int)"/>
     public int EnsureCapacity(int capacity)
     {
         ThrowHelper.ThrowArgumentOutOfRangeException_IfInvalidCapacity(capacity);
@@ -344,7 +335,6 @@ public ref struct ValueStack<T>
     /// </remarks>
     /// <param name="length">The length of the span to reserve.</param>
     /// <returns>A span that represents the reserved space.</returns>
-    /// <inheritdoc cref="ThrowHelper.ThrowArgumentOutOfRangeException_IfInvalidLength(int)"/>
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
     public Span<T> PushSpan(int length)
     {
@@ -474,7 +464,6 @@ public ref struct ValueStack<T>
     /// <para/>
     /// The value can be <c>null</c> for reference types.
     /// </param>
-    /// <inheritdoc cref="ThrowHelper.ThrowArgumentOutOfRangeException_IfInvalidIndex(int, int)"/>
     public void Push(int index, T item)
     {
         if ((uint)index > (uint)_count)
@@ -512,7 +501,6 @@ public ref struct ValueStack<T>
     /// The collection can contain elements that are <c>null</c>, if type <typeparamref name="T"/>
     /// is a reference type.
     /// </param>
-    /// <inheritdoc cref="ThrowHelper.ThrowArgumentOutOfRangeException_IfInvalidIndex(int, int)"/>
     public void PushRange(int index, scoped ReadOnlySpan<T> collection)
     {
         if ((uint)index > (uint)_count)
@@ -663,7 +651,6 @@ public ref struct ValueStack<T>
     /// The object at the specified position of the <see cref="ValueStack{T}"/>.
     /// </returns>
     /// <returns>The element at the specified index.</returns>
-    /// <inheritdoc cref="ThrowHelper.ThrowArgumentOutOfRangeException_IfInvalidIndex(int, int)"/>
     public readonly T Peek(int index) => this[index];
 
     /// <summary>
@@ -712,7 +699,6 @@ public ref struct ValueStack<T>
     /// </remarks>
     /// <param name="start">The zero-based index of the starting element to copy.</param>
     /// <param name="result">A span to which the elements are copied.</param>
-    /// <inheritdoc cref="ThrowHelper.ThrowArgumentOutOfRangeException_IfInvalidRange(int, int, int)"/>
     public readonly void Peek(int start, scoped Span<T> result)
     {
         if (!TryPeek(start, result))
@@ -752,7 +738,6 @@ public ref struct ValueStack<T>
     /// <returns>
     /// The object removed from the top of the <see cref="ValueStack{T}"/>.
     /// </returns>
-    /// <inheritdoc cref="ThrowHelper.ThrowInvalidOperationException_EmptyStack()"/>
     public T Pop()
     {
         Span<T> buffer = _buffer;
@@ -766,11 +751,9 @@ public ref struct ValueStack<T>
 
 
         T item = buffer[index];
-        if (RuntimeHelpers.IsReferenceOrContainsReferences<T>())
-        {
-            // Clear the element so that the GC can reclaim its reference.
-            buffer[index] = default!;
-        }
+
+        // Clear the element so that the GC can reclaim its reference.
+        buffer[index] = default!;
 
         _count = count - 1;
 
@@ -803,11 +786,9 @@ public ref struct ValueStack<T>
         }
 
         result = buffer[index];
-        if (RuntimeHelpers.IsReferenceOrContainsReferences<T>())
-        {
-            // Clear the element so that the GC can reclaim its reference.
-            buffer[index] = default!;
-        }
+
+        // Clear the element so that the GC can reclaim its reference.
+        buffer[index] = default!;
 
         _count = count - 1;
 
@@ -825,7 +806,6 @@ public ref struct ValueStack<T>
     /// <returns>
     /// The object removed from the specified position of the <see cref="ValueStack{T}"/>.
     /// </returns>
-    /// <inheritdoc cref="ThrowHelper.ThrowArgumentOutOfRangeException_IfInvalidIndex(int, int)"/>
     public T Pop(int index)
     {
         Span<T> buffer = _buffer;
@@ -836,11 +816,9 @@ public ref struct ValueStack<T>
         ThrowHelper.ThrowArgumentOutOfRangeException_IfInvalidIndex(itemIndex, buffer.Length);
 
         T item = buffer[itemIndex];
-        if (RuntimeHelpers.IsReferenceOrContainsReferences<T>())
-        {
-            // Clear the element so that the GC can reclaim its reference.
-            buffer[itemIndex] = default!;
-        }
+
+        // Clear the element so that the GC can reclaim its reference.
+        buffer[itemIndex] = default!;
 
         buffer.Slice(bufferStart, index).CopyTo(buffer.Slice(bufferStart + 1));
         _count = count - 1;
@@ -881,11 +859,9 @@ public ref struct ValueStack<T>
 
 
         result = buffer[itemIndex];
-        if (RuntimeHelpers.IsReferenceOrContainsReferences<T>())
-        {
-            // Clear the element so that the GC can reclaim its reference.
-            buffer[itemIndex] = default!;
-        }
+
+        // Clear the element so that the GC can reclaim its reference.
+        buffer[itemIndex] = default!;
 
         buffer.Slice(bufferStart, index).CopyTo(buffer.Slice(bufferStart + 1));
         _count = count - 1;
@@ -903,7 +879,6 @@ public ref struct ValueStack<T>
     /// </remarks>
     /// <param name="start">The zero-based index of the starting element to pop.</param>
     /// <param name="result">A span to which the elements are copied.</param>
-    /// <inheritdoc cref="ThrowHelper.ThrowArgumentOutOfRangeException_IfInvalidRange(int, int, int)"/>
     public void Pop(int start, scoped Span<T> result)
     {
         if (!TryPop(start, result))
@@ -935,11 +910,9 @@ public ref struct ValueStack<T>
 
 
         buffer.Slice(segmentStart, result.Length).CopyTo(result);
-        if (RuntimeHelpers.IsReferenceOrContainsReferences<T>())
-        {
-            // Clear the elements so that the GC can reclaim the references.
-            _buffer.Slice(segmentStart, result.Length).Clear();
-        }
+
+        // Clear the elements so that the GC can reclaim the references.
+        _buffer.Slice(segmentStart, result.Length).Clear();
 
         buffer.Slice(bufferStart, start).CopyTo(buffer.Slice(bufferStart + result.Length));
         _count = count - result.Length;
@@ -957,7 +930,6 @@ public ref struct ValueStack<T>
     /// </remarks>
     /// <param name="start">The zero-based index of the starting element to pop.</param>
     /// <param name="length">The number of elements to pop.</param>
-    /// <inheritdoc cref="ThrowHelper.ThrowArgumentOutOfRangeException_IfInvalidRange(int, int, int)"/>
     public void Pop(int start, int length)
     {
         if (!TryPop(start, length))
@@ -987,11 +959,8 @@ public ref struct ValueStack<T>
         if ((ulong)(uint)segmentStart + (ulong)(uint)length > (ulong)(uint)buffer.Length)
             return false;
 
-        if (RuntimeHelpers.IsReferenceOrContainsReferences<T>())
-        {
-            // Clear the elements so that the GC can reclaim the references.
-            _buffer.Slice(segmentStart, length).Clear();
-        }
+        // Clear the elements so that the GC can reclaim the references.
+        _buffer.Slice(segmentStart, length).Clear();
 
         buffer.Slice(bufferStart, start).CopyTo(buffer.Slice(bufferStart + length));
         _count = count - length;
@@ -1018,11 +987,8 @@ public ref struct ValueStack<T>
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
     public void Clear()
     {
-        if (RuntimeHelpers.IsReferenceOrContainsReferences<T>())
-        {
-            // Clear the elements so that the GC can reclaim the references.
-            _buffer.Slice(_buffer.Length - _count, _count).Clear();
-        }
+        // Clear the elements so that the GC can reclaim the references.
+        _buffer.Slice(_buffer.Length - _count, _count).Clear();
 
         _count = 0;
     }
@@ -1039,7 +1005,6 @@ public ref struct ValueStack<T>
     /// <returns>
     /// A shallow copy of a range of elements in the source <see cref="ValueStack{T}"/>.
     /// </returns>
-    /// <inheritdoc cref="ThrowHelper.ThrowArgumentOutOfRangeException_IfInvalidRange(int, int, int)"/>
     public readonly ValueStack<T> Slice(int start, int length)
     {
         // This method is needed for the slicing syntax ([i..n]) to work.
@@ -1076,7 +1041,6 @@ public ref struct ValueStack<T>
     /// The destination of the elements copied from <see cref="ValueStack{T}"/>.
     /// </param>
     /// <param name="destinationStart">The zero-based index in the destination at which copying begins.</param>
-    /// <inheritdoc cref="ThrowHelper.ThrowArgumentOutOfRangeException_IfInvalidIndex(int, int)"/>
     public readonly void CopyTo(T[] destination, int destinationStart) => CopyTo(0, destination, destinationStart, _count);
 
     /// <inheritdoc cref="CopyTo(Span{T})"/>
@@ -1089,7 +1053,6 @@ public ref struct ValueStack<T>
     /// <param name="length">
     /// The number of elements to copy.
     /// </param>
-    /// <inheritdoc cref="ThrowHelper.ThrowArgumentOutOfRangeException_IfInvalidRange(int, int, int)"/>
     public readonly void CopyTo(int start, scoped Span<T> destination, int length) => AsSpan(start, length).CopyTo(destination);
 
     /// <inheritdoc cref="CopyTo(T[], int)"/>
@@ -1101,7 +1064,6 @@ public ref struct ValueStack<T>
     /// </param>
     /// <param name="destinationStart">The zero-based index in the destination at which copying begins.</param>
     /// <param name="length">The number of elements to copy.</param>
-    /// <inheritdoc cref="ThrowHelper.ThrowArgumentOutOfRangeException_IfInvalidRange(int, int, int)"/>
     public readonly void CopyTo(int start, T[] destination, int destinationStart, int length)
     {
         ThrowHelper.ThrowArgumentNullException_IfNull(destination);
@@ -1144,7 +1106,6 @@ public ref struct ValueStack<T>
     /// <param name="destination">The destination of the elements copied from <see cref="ValueStack{T}"/>.</param>
     /// <param name="destinationStart">The zero-based index in the destination at which copying begins.</param>
     /// <param name="written">The number of elements copied to the destination.</param>
-    /// <inheritdoc cref="ThrowHelper.ThrowArgumentOutOfRangeException_IfInvalidIndex(int, int)"/>
     public readonly bool TryCopyTo(T[] destination, int destinationStart, out int written)
         => TryCopyTo(0, destination, destinationStart, _count, out written);
 
@@ -1155,7 +1116,6 @@ public ref struct ValueStack<T>
     /// <param name="destination">The destination of the elements copied from <see cref="ValueStack{T}"/>.</param>
     /// <param name="length">The number of elements to copy.</param>
     /// <param name="written">The number of elements copied to the destination.</param>
-    /// <inheritdoc cref="ThrowHelper.ThrowArgumentOutOfRangeException_IfInvalidRange(int, int, int)"/>
     public readonly bool TryCopyTo(int start, scoped Span<T> destination, int length, out int written)
     {
         if (AsSpan(start, length).TryCopyTo(destination))
@@ -1180,7 +1140,6 @@ public ref struct ValueStack<T>
     /// <param name="destinationStart">The zero-based index in the destination at which copying begins.</param>
     /// <param name="length">The number of elements to copy.</param>
     /// <param name="written">The number of elements copied to the array.</param>
-    /// <inheritdoc cref="ThrowHelper.ThrowArgumentOutOfRangeException_IfInvalidRange(int, int, int)"/>
     public readonly bool TryCopyTo(int start, T[] destination, int destinationStart, int length, out int written)
     {
         ThrowHelper.ThrowArgumentNullException_IfNull(destination);
@@ -1266,13 +1225,13 @@ public ref struct ValueStack<T>
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
     public readonly Span<T>.Enumerator GetEnumerator() => AsSpan().GetEnumerator();
 
-    /// <inheritdoc cref="ThrowHelper.ThrowNotSupportedException_CannotCallEqualsOnRefStruct"/>
+    /// <inheritdoc/>
     [Obsolete("Equals(object) on ValueStack will always throw an exception.")]
     [EditorBrowsable(EditorBrowsableState.Never)]
     public override readonly bool Equals(object? obj)
         => ThrowHelper.ThrowNotSupportedException_CannotCallEqualsOnRefStruct();
 
-    /// <inheritdoc cref="ThrowHelper.ThrowNotSupportedException_CannotCallGetHashCodeOnRefStruct"/>
+    /// <inheritdoc/>
     [Obsolete("GetHashCode() on ValueStack will always throw an exception.")]
     [EditorBrowsable(EditorBrowsableState.Never)]
     public override readonly int GetHashCode()
@@ -1284,11 +1243,8 @@ public ref struct ValueStack<T>
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
     public void Dispose()
     {
-        if (RuntimeHelpers.IsReferenceOrContainsReferences<T>())
-        {
-            // Clear the elements so that the GC can reclaim the references.
-            AsSpan().Clear();
-        }
+        // Clear the elements so that the GC can reclaim the references.
+        AsSpan().Clear();
 
         if (_rentedBuffer is not null)
         {
@@ -1315,7 +1271,6 @@ public ref struct ValueStack<T>
     /// without any further expansion of its backing storage.
     /// </summary>
     /// <param name="capacity">The new capacity.</param>
-    /// <inheritdoc cref="ThrowHelper.ThrowArgumentOutOfRangeException_IfInvalidCapacity(int, int)"/>
     public void TrimExcess(int capacity)
     {
         if (capacity < _buffer.Length)
@@ -1356,11 +1311,8 @@ public ref struct ValueStack<T>
         Span<T> to = newRentedBuffer.AsSpan(newRentedBuffer.Length - _count, _count);
         from.CopyTo(to);
 
-        if (RuntimeHelpers.IsReferenceOrContainsReferences<T>())
-        {
-            // Clear the elements so that the GC can reclaim the references.
-            from.Clear();
-        }
+        // Clear the elements so that the GC can reclaim the references.
+        from.Clear();
 
         _buffer = _rentedBuffer = newRentedBuffer;
         if (oldRentedBuffer is not null)

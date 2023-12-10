@@ -18,39 +18,6 @@ public static partial class Spans
     {
         if (comparer is null || comparer == EqualityComparer<T>.Default)
         {
-            if (typeof(T) == typeof(byte))
-                return MemoryExtensions.LastIndexOf(UnsafeCast<T, byte>(span), (byte)(object)value!);
-
-            if (typeof(T) == typeof(sbyte))
-                return MemoryExtensions.LastIndexOf(UnsafeCast<T, sbyte>(span), (sbyte)(object)value!);
-
-            if (typeof(T) == typeof(short))
-                return MemoryExtensions.LastIndexOf(UnsafeCast<T, short>(span), (short)(object)value!);
-
-            if (typeof(T) == typeof(ushort))
-                return MemoryExtensions.LastIndexOf(UnsafeCast<T, ushort>(span), (ushort)(object)value!);
-
-            if (typeof(T) == typeof(int))
-                return MemoryExtensions.LastIndexOf(UnsafeCast<T, int>(span), (int)(object)value!);
-
-            if (typeof(T) == typeof(uint))
-                return MemoryExtensions.LastIndexOf(UnsafeCast<T, uint>(span), (uint)(object)value!);
-
-            if (typeof(T) == typeof(long))
-                return MemoryExtensions.LastIndexOf(UnsafeCast<T, long>(span), (long)(object)value!);
-
-            if (typeof(T) == typeof(ulong))
-                return MemoryExtensions.LastIndexOf(UnsafeCast<T, ulong>(span), (ulong)(object)value!);
-
-            if (typeof(T) == typeof(float))
-                return MemoryExtensions.LastIndexOf(UnsafeCast<T, float>(span), (float)(object)value!);
-
-            if (typeof(T) == typeof(double))
-                return MemoryExtensions.LastIndexOf(UnsafeCast<T, double>(span), (double)(object)value!);
-
-            if (typeof(T) == typeof(char))
-                return MemoryExtensions.LastIndexOf(UnsafeCast<T, char>(span), (char)(object)value!);
-
             if (value is IEquatable<T>)
                 return LastIndexOfEquatable(ref MemoryMarshal.GetReference(span), span.Length, value);
         }
@@ -64,39 +31,6 @@ public static partial class Spans
     {
         if (comparer is null || comparer == EqualityComparer<T>.Default)
         {
-            if (typeof(T) == typeof(byte))
-                return MemoryExtensions.LastIndexOf(UnsafeCast<T, byte>(span), (byte)(object)value!);
-
-            if (typeof(T) == typeof(sbyte))
-                return MemoryExtensions.LastIndexOf(UnsafeCast<T, sbyte>(span), (sbyte)(object)value!);
-
-            if (typeof(T) == typeof(short))
-                return MemoryExtensions.LastIndexOf(UnsafeCast<T, short>(span), (short)(object)value!);
-
-            if (typeof(T) == typeof(ushort))
-                return MemoryExtensions.LastIndexOf(UnsafeCast<T, ushort>(span), (ushort)(object)value!);
-
-            if (typeof(T) == typeof(int))
-                return MemoryExtensions.LastIndexOf(UnsafeCast<T, int>(span), (int)(object)value!);
-
-            if (typeof(T) == typeof(uint))
-                return MemoryExtensions.LastIndexOf(UnsafeCast<T, uint>(span), (uint)(object)value!);
-
-            if (typeof(T) == typeof(long))
-                return MemoryExtensions.LastIndexOf(UnsafeCast<T, long>(span), (long)(object)value!);
-
-            if (typeof(T) == typeof(ulong))
-                return MemoryExtensions.LastIndexOf(UnsafeCast<T, ulong>(span), (ulong)(object)value!);
-
-            if (typeof(T) == typeof(float))
-                return MemoryExtensions.LastIndexOf(UnsafeCast<T, float>(span), (float)(object)value!);
-
-            if (typeof(T) == typeof(double))
-                return MemoryExtensions.LastIndexOf(UnsafeCast<T, double>(span), (double)(object)value!);
-
-            if (typeof(T) == typeof(char))
-                return MemoryExtensions.LastIndexOf(UnsafeCast<T, char>(span), (char)(object)value!);
-
             if (value is IEquatable<T>)
                 return LastIndexOfEquatable(ref MemoryMarshal.GetReference(span), span.Length, value);
         }

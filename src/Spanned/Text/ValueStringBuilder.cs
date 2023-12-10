@@ -38,7 +38,6 @@ public ref partial struct ValueStringBuilder
     /// capacity.
     /// </summary>
     /// <param name="capacity">The suggested starting size of this instance.</param>
-    /// <inheritdoc cref="ThrowHelper.ThrowArgumentOutOfRangeException_IfInvalidCapacity(int)"/>
     public ValueStringBuilder(int capacity)
     {
         _rentedBuffer = ArrayPool<char>.Shared.Rent(capacity);
@@ -60,7 +59,6 @@ public ref partial struct ValueStringBuilder
     /// </summary>
     /// <param name="value">The initial content for this instance.</param>
     /// <param name="capacity">The suggested starting size of this instance.</param>
-    /// <inheritdoc cref="ThrowHelper.ThrowArgumentOutOfRangeException_IfInvalidCapacity(int, int)"/>
     public ValueStringBuilder(scoped ReadOnlySpan<char> value, int capacity)
     {
         ThrowHelper.ThrowArgumentOutOfRangeException_IfInvalidCapacity(capacity, value.Length);
@@ -103,13 +101,13 @@ public ref partial struct ValueStringBuilder
     /// <param name="sb">The string builder to be converted.</param>
     /// <returns>A span covering the content of the <see cref="ValueStringBuilder"/>.</returns>
     public static implicit operator ReadOnlySpan<char>(ValueStringBuilder sb)
-        => MemoryMarshal.CreateReadOnlySpan(ref MemoryMarshal.GetReference(sb._buffer), sb._length);
+        => sb._buffer.Slice(0, sb._length);
 
     /// <summary>
     /// Returns a span that represents the content of the <see cref="ValueStringBuilder"/>.
     /// </summary>
     /// <returns>A span covering the content of the <see cref="ValueStringBuilder"/>.</returns>
-    public readonly Span<char> AsSpan() => MemoryMarshal.CreateSpan(ref MemoryMarshal.GetReference(_buffer), _length);
+    public readonly Span<char> AsSpan() => _buffer.Slice(0, _length);
 
     /// <summary>
     /// Returns a span that represents the content of the <see cref="ValueStringBuilder"/>,
@@ -124,7 +122,7 @@ public ref partial struct ValueStringBuilder
         if (ensureNullTerminator)
             EnsureNullTerminator();
 
-        return MemoryMarshal.CreateSpan(ref MemoryMarshal.GetReference(_buffer), _length);
+        return _buffer.Slice(0, _length);
     }
 
     /// <summary>
@@ -132,7 +130,6 @@ public ref partial struct ValueStringBuilder
     /// </summary>
     /// <param name="start">The start index of the segment.</param>
     /// <returns>A span covering the segment of the content.</returns>
-    /// <inheritdoc cref="ThrowHelper.ThrowArgumentOutOfRangeException_IfInvalidRange(int, int)"/>
     public readonly Span<char> AsSpan(int start) => AsSpan(start, _length - start);
 
     /// <summary>
@@ -141,13 +138,11 @@ public ref partial struct ValueStringBuilder
     /// <param name="start">The start index of the segment.</param>
     /// <param name="length">The length of the segment.</param>
     /// <returns>A span covering the segment of the content.</returns>
-    /// <inheritdoc cref="ThrowHelper.ThrowArgumentOutOfRangeException_IfInvalidRange(int, int, int)"/>
     public readonly Span<char> AsSpan(int start, int length)
     {
         ThrowHelper.ThrowArgumentOutOfRangeException_IfInvalidRange(start, length, _length);
 
-        // Skip additional bound checks.
-        return MemoryMarshal.CreateSpan(ref Unsafe.Add(ref MemoryMarshal.GetReference(_buffer), start), length);
+        return _buffer.Slice(start, length);
     }
 
     /// <summary>
@@ -166,7 +161,6 @@ public ref partial struct ValueStringBuilder
     /// <summary>
     /// The length of this instance.
     /// </summary>
-    /// <inheritdoc cref="ThrowHelper.ThrowArgumentOutOfRangeException_IfInvalidCount(int, int)"/>
     public int Length
     {
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
@@ -183,7 +177,6 @@ public ref partial struct ValueStringBuilder
     /// The maximum number of characters that can be contained in the memory
     /// allocated by the current instance.
     /// </summary>
-    /// <inheritdoc cref="ThrowHelper.ThrowArgumentOutOfRangeException_IfInvalidCapacity(int, int)"/>
     public int Capacity
     {
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
@@ -204,7 +197,6 @@ public ref partial struct ValueStringBuilder
     /// </summary>
     /// <param name="index">The position of the character.</param>
     /// <returns>The Unicode character at position index.</returns>
-    /// <inheritdoc cref="ThrowHelper.ThrowArgumentOutOfRangeException_IfInvalidIndex(int, int)"/>
     public readonly ref char this[int index]
     {
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
@@ -249,7 +241,6 @@ public ref partial struct ValueStringBuilder
     /// </summary>
     /// <param name="capacity">The minimum capacity to ensure.</param>
     /// <returns>The new capacity of this instance.</returns>
-    /// <inheritdoc cref="ThrowHelper.ThrowArgumentOutOfRangeException_IfInvalidCapacity(int)"/>
     public int EnsureCapacity(int capacity)
     {
         ThrowHelper.ThrowArgumentOutOfRangeException_IfInvalidCapacity(capacity);
@@ -363,7 +354,6 @@ public ref partial struct ValueStringBuilder
     /// </summary>
     /// <param name="start">The zero-based position in this instance where removal begins.</param>
     /// <param name="length">The number of characters to remove.</param>
-    /// <inheritdoc cref="ThrowHelper.ThrowArgumentOutOfRangeException_IfInvalidRange(int, int, int)"/>
     public void Remove(int start, int length)
     {
         ThrowHelper.ThrowArgumentOutOfRangeException_IfInvalidRange(start, length, _length);
@@ -389,7 +379,6 @@ public ref partial struct ValueStringBuilder
     /// <param name="newChar">The character that replaces oldChar.</param>
     /// <param name="start">The position in this instance where the substring begins.</param>
     /// <param name="length">The length of the substring.</param>
-    /// <inheritdoc cref="ThrowHelper.ThrowArgumentOutOfRangeException_IfInvalidRange(int, int, int)"/>
     public readonly void Replace(char oldChar, char newChar, int start, int length)
     {
         Span<char> chars = AsSpan(start, length);
@@ -427,7 +416,6 @@ public ref partial struct ValueStringBuilder
     /// <param name="start">The position in this instance where the substring begins.</param>
     /// <param name="length">The length of the substring.</param>
     /// <exception cref="ArgumentNullException"><paramref name="oldValue"/> is null.</exception>
-    /// <inheritdoc cref="ThrowHelper.ThrowArgumentOutOfRangeException_IfInvalidRange(int, int, int)"/>
     public void Replace(string oldValue, string? newValue, int start, int length)
     {
         ThrowHelper.ThrowArgumentNullException_IfNull(oldValue);
@@ -454,7 +442,6 @@ public ref partial struct ValueStringBuilder
     /// <param name="start">The position in this instance where the substring begins.</param>
     /// <param name="length">The length of the substring.</param>
     /// <exception cref="ArgumentOutOfRangeException">The length of <paramref name="oldValue"/> is zero.</exception>
-    /// <inheritdoc cref="ThrowHelper.ThrowArgumentOutOfRangeException_IfInvalidRange(int, int, int)"/>
     public void Replace(scoped ReadOnlySpan<char> oldValue, scoped ReadOnlySpan<char> newValue, int start, int length)
     {
         ThrowHelper.ThrowArgumentOutOfRangeException_IfInvalidRange(start, length, _length);
@@ -565,7 +552,6 @@ public ref partial struct ValueStringBuilder
     /// The destination of the elements copied from <see cref="ValueStringBuilder"/>.
     /// </param>
     /// <param name="destinationStart">The zero-based index in the destination at which copying begins.</param>
-    /// <inheritdoc cref="ThrowHelper.ThrowArgumentOutOfRangeException_IfInvalidIndex(int, int)"/>
     public readonly void CopyTo(char[] destination, int destinationStart) => CopyTo(0, destination, destinationStart, _length);
 
     /// <inheritdoc cref="CopyTo(Span{char})"/>
@@ -578,7 +564,6 @@ public ref partial struct ValueStringBuilder
     /// <param name="length">
     /// The number of elements to copy.
     /// </param>
-    /// <inheritdoc cref="ThrowHelper.ThrowArgumentOutOfRangeException_IfInvalidRange(int, int, int)"/>
     public readonly void CopyTo(int start, scoped Span<char> destination, int length) => AsSpan(start, length).CopyTo(destination);
 
     /// <inheritdoc cref="CopyTo(char[], int)"/>
@@ -590,7 +575,6 @@ public ref partial struct ValueStringBuilder
     /// </param>
     /// <param name="destinationStart">The zero-based index in the destination at which copying begins.</param>
     /// <param name="length">The number of elements to copy.</param>
-    /// <inheritdoc cref="ThrowHelper.ThrowArgumentOutOfRangeException_IfInvalidRange(int, int, int)"/>
     public readonly void CopyTo(int start, char[] destination, int destinationStart, int length)
     {
         ThrowHelper.ThrowArgumentNullException_IfNull(destination);
@@ -633,7 +617,6 @@ public ref partial struct ValueStringBuilder
     /// <param name="destination">The destination of the elements copied from <see cref="ValueStringBuilder"/>.</param>
     /// <param name="destinationStart">The zero-based index in the destination at which copying begins.</param>
     /// <param name="written">The number of elements copied to the destination.</param>
-    /// <inheritdoc cref="ThrowHelper.ThrowArgumentOutOfRangeException_IfInvalidIndex(int, int)"/>
     public readonly bool TryCopyTo(char[] destination, int destinationStart, out int written)
         => TryCopyTo(0, destination, destinationStart, _length, out written);
 
@@ -644,7 +627,6 @@ public ref partial struct ValueStringBuilder
     /// <param name="destination">The destination of the elements copied from <see cref="ValueStringBuilder"/>.</param>
     /// <param name="length">The number of elements to copy.</param>
     /// <param name="written">The number of elements copied to the destination.</param>
-    /// <inheritdoc cref="ThrowHelper.ThrowArgumentOutOfRangeException_IfInvalidRange(int, int, int)"/>
     public readonly bool TryCopyTo(int start, scoped Span<char> destination, int length, out int written)
     {
         if (AsSpan(start, length).TryCopyTo(destination))
@@ -669,7 +651,6 @@ public ref partial struct ValueStringBuilder
     /// <param name="destinationStart">The zero-based index in the destination at which copying begins.</param>
     /// <param name="length">The number of elements to copy.</param>
     /// <param name="written">The number of elements copied to the array.</param>
-    /// <inheritdoc cref="ThrowHelper.ThrowArgumentOutOfRangeException_IfInvalidRange(int, int, int)"/>
     public readonly bool TryCopyTo(int start, char[] destination, int destinationStart, int length, out int written)
     {
         ThrowHelper.ThrowArgumentNullException_IfNull(destination);
@@ -683,16 +664,12 @@ public ref partial struct ValueStringBuilder
     /// <param name="start">The starting index of the segment in this instance.</param>
     /// <param name="length">The length of the segment.</param>
     /// <returns>The string representation of the specified segment.</returns>
-    /// <inheritdoc cref="ThrowHelper.ThrowArgumentOutOfRangeException_IfInvalidRange(int, int, int)"/>
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
     public readonly string ToString(int start, int length)
     {
         ThrowHelper.ThrowArgumentOutOfRangeException_IfInvalidRange(start, length, _length);
 
-        // Skip bound checks.
-        Span<char> chars = MemoryMarshal.CreateSpan(ref Unsafe.Add(ref MemoryMarshal.GetReference(_buffer), start), length);
-
-        return chars.ToString();
+        return _buffer.Slice(start, length).ToString();
     }
 
     /// <summary>
@@ -705,14 +682,12 @@ public ref partial struct ValueStringBuilder
     /// <param name="length">The length of the segment.</param>
     /// <param name="dispose">A flag indicating whether to dispose of internal resources.</param>
     /// <returns>The string representation of the specified segment.</returns>
-    /// <inheritdoc cref="ThrowHelper.ThrowArgumentOutOfRangeException_IfInvalidRange(int, int, int)"/>
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
     public string ToString(int start, int length, bool dispose)
     {
         ThrowHelper.ThrowArgumentOutOfRangeException_IfInvalidRange(start, length, _length);
 
-        // Skip bound checks.
-        Span<char> chars = MemoryMarshal.CreateSpan(ref Unsafe.Add(ref MemoryMarshal.GetReference(_buffer), start), length);
+        Span<char> chars = _buffer.Slice(start, length);
         string s = chars.ToString();
 
         if (dispose)
@@ -732,14 +707,7 @@ public ref partial struct ValueStringBuilder
     /// Returns a string representation of this instance.
     /// </summary>
     /// <returns>The string representation of this instance.</returns>
-    [MethodImpl(MethodImplOptions.AggressiveInlining)]
-    public override readonly string ToString()
-    {
-        // Skip additional bound checks.
-        Span<char> chars = MemoryMarshal.CreateSpan(ref MemoryMarshal.GetReference(_buffer), _length);
-
-        return chars.ToString();
-    }
+    public override readonly string ToString() => _buffer.Slice(0, _length).ToString();
 
     /// <summary>
     /// Returns a string representation of this instance.
@@ -752,8 +720,7 @@ public ref partial struct ValueStringBuilder
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
     public string ToString(bool dispose)
     {
-        // Skip additional bound checks.
-        Span<char> chars = MemoryMarshal.CreateSpan(ref MemoryMarshal.GetReference(_buffer), _length);
+        Span<char> chars = _buffer.Slice(0, _length);
         string s = chars.ToString();
 
         if (dispose)
@@ -785,13 +752,13 @@ public ref partial struct ValueStringBuilder
     /// <returns><c>true</c> if the characters in this instance and another string builder are the same; otherwise, <c>false</c>.</returns>
     public readonly bool Equals(in ValueStringBuilder sb) => AsSpan().SequenceEqual(sb.AsSpan());
 
-    /// <inheritdoc cref="ThrowHelper.ThrowNotSupportedException_CannotCallEqualsOnRefStruct"/>
+    /// <inheritdoc/>
     [Obsolete("Equals(object) on ValueStringBuilder will always throw an exception.")]
     [EditorBrowsable(EditorBrowsableState.Never)]
     public override readonly bool Equals(object? obj)
         => ThrowHelper.ThrowNotSupportedException_CannotCallEqualsOnRefStruct();
 
-    /// <inheritdoc cref="ThrowHelper.ThrowNotSupportedException_CannotCallGetHashCodeOnRefStruct"/>
+    /// <inheritdoc/>
     [Obsolete("GetHashCode() on ValueStringBuilder will always throw an exception.")]
     [EditorBrowsable(EditorBrowsableState.Never)]
     public override readonly int GetHashCode()
@@ -828,7 +795,6 @@ public ref partial struct ValueStringBuilder
     /// without any further expansion of its backing storage.
     /// </summary>
     /// <param name="capacity">The new capacity.</param>
-    /// <inheritdoc cref="ThrowHelper.ThrowArgumentOutOfRangeException_IfInvalidCapacity(int, int)"/>
     public void TrimExcess(int capacity)
     {
         if (capacity < _buffer.Length)

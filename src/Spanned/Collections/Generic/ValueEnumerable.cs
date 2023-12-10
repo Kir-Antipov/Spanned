@@ -97,13 +97,13 @@ internal readonly ref struct ValueEnumerable<T>
     /// </returns>
     public Enumerator GetEnumerator() => new(this);
 
-    /// <inheritdoc cref="ThrowHelper.ThrowNotSupportedException_CannotCallEqualsOnRefStruct"/>
+    /// <inheritdoc/>
     [Obsolete("Equals(object) on ValueEnumerable will always throw an exception.")]
     [EditorBrowsable(EditorBrowsableState.Never)]
     public override readonly bool Equals(object? obj)
         => ThrowHelper.ThrowNotSupportedException_CannotCallEqualsOnRefStruct();
 
-    /// <inheritdoc cref="ThrowHelper.ThrowNotSupportedException_CannotCallGetHashCodeOnRefStruct"/>
+    /// <inheritdoc/>
     [Obsolete("GetHashCode() on ValueEnumerable will always throw an exception.")]
     [EditorBrowsable(EditorBrowsableState.Never)]
     public override readonly int GetHashCode()

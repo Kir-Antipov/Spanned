@@ -27,12 +27,6 @@ public static partial class Spans
                 span = (T[])enumerable;
                 return true;
             }
-
-            if (typeof(T) == typeof(char) && enumerable is string str)
-            {
-                span = UnsafeCast<char, T>(str);
-                return true;
-            }
         }
 
         span = default;
@@ -71,43 +65,10 @@ public static partial class Spans
     /// Supported only for platforms that support misaligned memory access or when the memory block is aligned by other means.
     /// </remarks>
     /// <param name="span">The source slice, of type <typeparamref name="TFrom"/>.</param>
-    [MethodImpl(MethodImplOptions.AggressiveInlining)]
-    public static Span<TTo> UnsafeCast<TFrom, TTo>(this scoped Span<TFrom> span)
-    {
-        // Source: dotnet/runtime/src/libraries/System.Private.CoreLib/src/System/Runtime/InteropServices/MemoryMarshal.cs#Cast
-
-        // Use unsigned integers - unsigned division by constant (especially by power of 2)
-        // and checked casts are faster and smaller.
-        uint fromSize = (uint)Unsafe.SizeOf<TFrom>();
-        uint toSize = (uint)Unsafe.SizeOf<TTo>();
-        uint fromLength = (uint)span.Length;
-        int toLength;
-
-        if (fromSize == toSize)
-        {
-            // Special case for same size types - `(ulong)fromLength * (ulong)fromSize / (ulong)toSize`
-            // should be optimized to just `length` but the JIT doesn't do that today.
-            toLength = (int)fromLength;
-        }
-        else if (fromSize == 1)
-        {
-            // Special case for byte sized TFrom - `(ulong)fromLength * (ulong)fromSize / (ulong)toSize`
-            // becomes `(ulong)fromLength / (ulong)toSize` but the JIT can't narrow it down to `int`
-            // and can't eliminate the checked cast. This also avoids a 32 bit specific issue,
-            // the JIT can't eliminate long multiply by 1.
-            toLength = (int)(fromLength / toSize);
-        }
-        else
-        {
-            // Ensure that casts are done in such a way that the JIT is able to "see"
-            // the uint->ulong casts and the multiply together so that on 32 bit targets
-            // 32x32to64 multiplication is used.
-            ulong toLengthUInt64 = (ulong)fromLength * (ulong)fromSize / (ulong)toSize;
-            toLength = checked((int)toLengthUInt64);
-        }
-
-        return MemoryMarshal.CreateSpan(ref Unsafe.As<TFrom, TTo>(ref MemoryMarshal.GetReference(span)), toLength);
-    }
+    public static Span<TTo> UnsafeCast<TFrom, TTo>(this Span<TFrom> span)
+        where TFrom : struct
+        where TTo : struct
+        => MemoryMarshal.Cast<TFrom, TTo>(span);
 
     /// <summary>
     /// Casts a Span of <typeparamref name="TFrom"/> to a Span of <typeparamref name="TTo"/>.
@@ -116,40 +77,8 @@ public static partial class Spans
     /// Supported only for platforms that support misaligned memory access or when the memory block is aligned by other means.
     /// </remarks>
     /// <param name="span">The source slice, of type <typeparamref name="TFrom"/>.</param>
-    [MethodImpl(MethodImplOptions.AggressiveInlining)]
-    public static ReadOnlySpan<TTo> UnsafeCast<TFrom, TTo>(this scoped ReadOnlySpan<TFrom> span)
-    {
-        // Source: dotnet/runtime/src/libraries/System.Private.CoreLib/src/System/Runtime/InteropServices/MemoryMarshal.cs#Cast
-
-        // Use unsigned integers - unsigned division by constant (especially by power of 2)
-        // and checked casts are faster and smaller.
-        uint fromSize = (uint)Unsafe.SizeOf<TFrom>();
-        uint toSize = (uint)Unsafe.SizeOf<TTo>();
-        uint fromLength = (uint)span.Length;
-        int toLength;
-        if (fromSize == toSize)
-        {
-            // Special case for same size types - `(ulong)fromLength * (ulong)fromSize / (ulong)toSize`
-            // should be optimized to just `length` but the JIT doesn't do that today.
-            toLength = (int)fromLength;
-        }
-        else if (fromSize == 1)
-        {
-            // Special case for byte sized TFrom - `(ulong)fromLength * (ulong)fromSize / (ulong)toSize`
-            // becomes `(ulong)fromLength / (ulong)toSize` but the JIT can't narrow it down to `int`
-            // and can't eliminate the checked cast. This also avoids a 32 bit specific issue,
-            // the JIT can't eliminate long multiply by 1.
-            toLength = (int)(fromLength / toSize);
-        }
-        else
-        {
-            // Ensure that casts are done in such a way that the JIT is able to "see"
-            // the uint->ulong casts and the multiply together so that on 32 bit targets
-            // 32x32to64 multiplication is used.
-            ulong toLengthUInt64 = (ulong)fromLength * (ulong)fromSize / (ulong)toSize;
-            toLength = checked((int)toLengthUInt64);
-        }
-
-        return MemoryMarshal.CreateReadOnlySpan(ref Unsafe.As<TFrom, TTo>(ref MemoryMarshal.GetReference(span)), toLength);
-    }
+    public static ReadOnlySpan<TTo> UnsafeCast<TFrom, TTo>(this ReadOnlySpan<TFrom> span)
+        where TFrom : struct
+        where TTo : struct
+        => MemoryMarshal.Cast<TFrom, TTo>(span);
 }

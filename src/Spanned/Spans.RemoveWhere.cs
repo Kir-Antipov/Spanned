@@ -51,11 +51,8 @@ public static partial class Spans
             }
         }
 
-        if (RuntimeHelpers.IsReferenceOrContainsReferences<T>())
-        {
-            // Clear the elements so that the GC can reclaim the references.
-            span.Slice(freeIndex, span.Length - freeIndex).Clear();
-        }
+        // Clear the elements so that the GC can reclaim the references.
+        span.Slice(freeIndex, span.Length - freeIndex).Clear();
 
         return span.Length - freeIndex;
     }
@@ -105,11 +102,8 @@ public static partial class Spans
             }
         }
 
-        if (RuntimeHelpers.IsReferenceOrContainsReferences<T>())
-        {
-            // Clear the elements so that the GC can reclaim the references.
-            span.Slice(freeIndex, span.Length - freeIndex).Clear();
-        }
+        // Clear the elements so that the GC can reclaim the references.
+        span.Slice(freeIndex, span.Length - freeIndex).Clear();
 
         return span.Length - freeIndex;
     }

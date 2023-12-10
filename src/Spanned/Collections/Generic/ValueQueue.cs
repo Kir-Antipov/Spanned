@@ -46,7 +46,6 @@ public ref struct ValueQueue<T>
     /// is empty and has the specified initial capacity.
     /// </summary>
     /// <param name="capacity">The number of elements that the new queue can initially store.</param>
-    /// <inheritdoc cref="ThrowHelper.ThrowArgumentOutOfRangeException_IfInvalidCapacity(int)"/>
     public ValueQueue(int capacity)
     {
         _rentedBuffer = ArrayPool<T>.Shared.Rent(capacity);
@@ -72,7 +71,6 @@ public ref struct ValueQueue<T>
     /// </summary>
     /// <param name="collection">The collection whose elements are copied to the new queue.</param>
     /// <param name="capacity">The number of elements that the new queue can initially store.</param>
-    /// <inheritdoc cref="ThrowHelper.ThrowArgumentOutOfRangeException_IfInvalidCapacity(int, int)"/>
     public ValueQueue(scoped ReadOnlySpan<T> collection, int capacity)
     {
         ThrowHelper.ThrowArgumentOutOfRangeException_IfInvalidCapacity(capacity, collection.Length);
@@ -129,20 +127,19 @@ public ref struct ValueQueue<T>
     /// <param name="queue">The queue to be converted.</param>
     /// <returns>A span covering the content of the <see cref="ValueQueue{T}"/>.</returns>
     public static implicit operator ReadOnlySpan<T>(ValueQueue<T> queue)
-        => MemoryMarshal.CreateReadOnlySpan(ref Unsafe.Add(ref MemoryMarshal.GetReference(queue._buffer), queue._head), queue._count);
+        => queue._buffer.Slice(queue._head, queue._count);
 
     /// <summary>
     /// Returns a span that represents the content of the <see cref="ValueQueue{T}"/>.
     /// </summary>
     /// <returns>A span covering the content of the <see cref="ValueQueue{T}"/>.</returns>
-    public readonly Span<T> AsSpan() => MemoryMarshal.CreateSpan(ref Unsafe.Add(ref MemoryMarshal.GetReference(_buffer), _head), _count);
+    public readonly Span<T> AsSpan() => _buffer.Slice(_head, _count);
 
     /// <summary>
     /// Returns a span that represents a segment of the queue starting from the specified index.
     /// </summary>
     /// <param name="start">The start index of the segment.</param>
     /// <returns>A span covering the segment of the queue.</returns>
-    /// <inheritdoc cref="ThrowHelper.ThrowArgumentOutOfRangeException_IfInvalidRange(int, int)"/>
     public readonly Span<T> AsSpan(int start) => AsSpan(start, _count - start);
 
     /// <summary>
@@ -151,13 +148,11 @@ public ref struct ValueQueue<T>
     /// <param name="start">The start index of the segment.</param>
     /// <param name="length">The length of the segment.</param>
     /// <returns>A span covering the segment of the queue.</returns>
-    /// <inheritdoc cref="ThrowHelper.ThrowArgumentOutOfRangeException_IfInvalidRange(int, int, int)"/>
     public readonly Span<T> AsSpan(int start, int length)
     {
         ThrowHelper.ThrowArgumentOutOfRangeException_IfInvalidRange(start, length, _count);
 
-        // Skip additional bound checks.
-        return MemoryMarshal.CreateSpan(ref Unsafe.Add(ref MemoryMarshal.GetReference(_buffer), _head + start), length);
+        return _buffer.Slice(_head + start, length);
     }
 
     /// <summary>
@@ -188,7 +183,6 @@ public ref struct ValueQueue<T>
     /// <summary>
     /// The number of elements contained in the <see cref="ValueQueue{T}"/>.
     /// </summary>
-    /// <inheritdoc cref="ThrowHelper.ThrowArgumentOutOfRangeException_IfInvalidCount(int, int)"/>
     public int Count
     {
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
@@ -208,7 +202,6 @@ public ref struct ValueQueue<T>
     /// The total number of elements the internal data structure can hold
     /// without resizing.
     /// </summary>
-    /// <inheritdoc cref="ThrowHelper.ThrowArgumentOutOfRangeException_IfInvalidCapacity(int, int)"/>
     public int Capacity
     {
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
@@ -229,7 +222,6 @@ public ref struct ValueQueue<T>
     /// </summary>
     /// <param name="index">The zero-based index of the element to get or set.</param>
     /// <returns>The element at the specified index.</returns>
-    /// <inheritdoc cref="ThrowHelper.ThrowArgumentOutOfRangeException_IfInvalidIndex(int, int)"/>
     public readonly ref T this[int index]
     {
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
@@ -267,7 +259,6 @@ public ref struct ValueQueue<T>
     /// </summary>
     /// <returns>The new capacity of this queue.</returns>
     /// <param name="capacity">The minimum capacity to ensure.</param>
-    /// <inheritdoc cref="ThrowHelper.ThrowArgumentOutOfRangeException_IfInvalidCapacity(int)"/>
     public int EnsureCapacity(int capacity)
     {
         ThrowHelper.ThrowArgumentOutOfRangeException_IfInvalidCapacity(capacity);
@@ -332,7 +323,6 @@ public ref struct ValueQueue<T>
     /// </summary>
     /// <param name="length">The length of the span to reserve.</param>
     /// <returns>A span that represents the reserved space.</returns>
-    /// <inheritdoc cref="ThrowHelper.ThrowArgumentOutOfRangeException_IfInvalidLength(int)"/>
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
     public Span<T> EnqueueSpan(int length)
     {
@@ -443,7 +433,6 @@ public ref struct ValueQueue<T>
     /// </summary>
     /// <param name="index">The zero-based index of the queue to insert the element at.</param>
     /// <param name="item">The object to be added to the <see cref="ValueQueue{T}"/>.</param>
-    /// <inheritdoc cref="ThrowHelper.ThrowArgumentOutOfRangeException_IfInvalidIndex(int, int)"/>
     public void Enqueue(int index, T item)
     {
         if ((uint)index > (uint)_count)
@@ -476,7 +465,6 @@ public ref struct ValueQueue<T>
     /// The collection can contain elements that are <c>null</c>, if type <typeparamref name="T"/>
     /// is a reference type.
     /// </param>
-    /// <inheritdoc cref="ThrowHelper.ThrowArgumentOutOfRangeException_IfInvalidIndex(int, int)"/>
     public void EnqueueRange(int index, scoped ReadOnlySpan<T> collection)
     {
         if ((uint)index > (uint)_count)
@@ -554,7 +542,6 @@ public ref struct ValueQueue<T>
     /// <returns>
     /// The object at the beginning of the <see cref="ValueQueue{T}"/>.
     /// </returns>
-    /// <inheritdoc cref="ThrowHelper.ThrowInvalidOperationException_EmptyQueue()"/>
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
     public readonly T Peek()
     {
@@ -603,7 +590,6 @@ public ref struct ValueQueue<T>
     /// The object at the specified position of the <see cref="ValueQueue{T}"/>.
     /// </returns>
     /// <returns>The element at the specified index.</returns>
-    /// <inheritdoc cref="ThrowHelper.ThrowArgumentOutOfRangeException_IfInvalidIndex(int, int)"/>
     public readonly T Peek(int index) => this[index];
 
     /// <summary>
@@ -643,7 +629,6 @@ public ref struct ValueQueue<T>
     /// </remarks>
     /// <param name="start">The zero-based index of the starting element to copy.</param>
     /// <param name="result">A span to which the elements are copied.</param>
-    /// <inheritdoc cref="ThrowHelper.ThrowArgumentOutOfRangeException_IfInvalidRange(int, int, int)"/>
     public readonly void Peek(int start, scoped Span<T> result)
     {
         if (!TryPeek(start, result))
@@ -680,7 +665,6 @@ public ref struct ValueQueue<T>
     /// <returns>
     /// The object removed from the beginning of the <see cref="ValueQueue{T}"/>.
     /// </returns>
-    /// <inheritdoc cref="ThrowHelper.ThrowInvalidOperationException_EmptyQueue()"/>
     public T Dequeue()
     {
         Span<T> buffer = _buffer;
@@ -696,11 +680,8 @@ public ref struct ValueQueue<T>
         _head = head + 1;
         T item = Unsafe.Add(ref MemoryMarshal.GetReference(buffer), head);
 
-        if (RuntimeHelpers.IsReferenceOrContainsReferences<T>())
-        {
-            // Clear the element so that the GC can reclaim its reference.
-            Unsafe.Add(ref MemoryMarshal.GetReference(buffer), head) = default!;
-        }
+        // Clear the element so that the GC can reclaim its reference.
+        Unsafe.Add(ref MemoryMarshal.GetReference(buffer), head) = default!;
 
         return item;
     }
@@ -734,11 +715,8 @@ public ref struct ValueQueue<T>
         _head = head + 1;
         result = Unsafe.Add(ref MemoryMarshal.GetReference(buffer), head);
 
-        if (RuntimeHelpers.IsReferenceOrContainsReferences<T>())
-        {
-            // Clear the element so that the GC can reclaim its reference.
-            Unsafe.Add(ref MemoryMarshal.GetReference(buffer), head) = default!;
-        }
+        // Clear the element so that the GC can reclaim its reference.
+        Unsafe.Add(ref MemoryMarshal.GetReference(buffer), head) = default!;
 
         return true;
     }
@@ -750,18 +728,15 @@ public ref struct ValueQueue<T>
     /// <returns>
     /// The object removed from the specified position of the <see cref="ValueQueue{T}"/>.
     /// </returns>
-    /// <inheritdoc cref="ThrowHelper.ThrowArgumentOutOfRangeException_IfInvalidIndex(int, int)"/>
     public T Dequeue(int index)
     {
         ThrowHelper.ThrowArgumentOutOfRangeException_IfInvalidIndex(index, _count);
 
         int itemIndex = _head + index;
         T item = _buffer[itemIndex];
-        if (RuntimeHelpers.IsReferenceOrContainsReferences<T>())
-        {
-            // Clear the element so that the GC can reclaim its reference.
-            _buffer[itemIndex] = default!;
-        }
+
+        // Clear the element so that the GC can reclaim its reference.
+        _buffer[itemIndex] = default!;
 
         _buffer.Slice(itemIndex + 1, _count - index - 1).CopyTo(_buffer.Slice(itemIndex));
         _count--;
@@ -795,11 +770,9 @@ public ref struct ValueQueue<T>
         }
 
         result = buffer[itemIndex];
-        if (RuntimeHelpers.IsReferenceOrContainsReferences<T>())
-        {
-            // Clear the element so that the GC can reclaim its reference.
-            buffer[itemIndex] = default!;
-        }
+
+        // Clear the element so that the GC can reclaim its reference.
+        buffer[itemIndex] = default!;
 
         buffer.Slice(itemIndex + 1, _count - index - 1).CopyTo(buffer.Slice(itemIndex));
         _count--;
@@ -813,7 +786,6 @@ public ref struct ValueQueue<T>
     /// </summary>
     /// <param name="start">The zero-based index of the starting element to dequeue.</param>
     /// <param name="result">A span to which the elements are copied.</param>
-    /// <inheritdoc cref="ThrowHelper.ThrowArgumentOutOfRangeException_IfInvalidRange(int, int, int)"/>
     public void Dequeue(int start, scoped Span<T> result)
     {
         if (!TryDequeue(start, result))
@@ -840,11 +812,9 @@ public ref struct ValueQueue<T>
             return false;
 
         buffer.Slice(segmentStart, result.Length).CopyTo(result);
-        if (RuntimeHelpers.IsReferenceOrContainsReferences<T>())
-        {
-            // Clear the elements so that the GC can reclaim the references.
-            _buffer.Slice(segmentStart, result.Length).Clear();
-        }
+
+        // Clear the elements so that the GC can reclaim the references.
+        _buffer.Slice(segmentStart, result.Length).Clear();
 
         buffer.Slice(segmentStart + result.Length, _count - start - result.Length).CopyTo(buffer.Slice(segmentStart));
         _count = count - result.Length;
@@ -858,7 +828,6 @@ public ref struct ValueQueue<T>
     /// </summary>
     /// <param name="start">The zero-based index of the starting element to dequeue.</param>
     /// <param name="length">The number of elements to dequeue.</param>
-    /// <inheritdoc cref="ThrowHelper.ThrowArgumentOutOfRangeException_IfInvalidRange(int, int, int)"/>
     public void Dequeue(int start, int length)
     {
         if (!TryDequeue(start, length))
@@ -884,11 +853,8 @@ public ref struct ValueQueue<T>
         if ((ulong)(uint)start + (ulong)(uint)length > (ulong)(uint)_count)
             return false;
 
-        if (RuntimeHelpers.IsReferenceOrContainsReferences<T>())
-        {
-            // Clear the elements so that the GC can reclaim the references.
-            _buffer.Slice(segmentStart, length).Clear();
-        }
+        // Clear the elements so that the GC can reclaim the references.
+        _buffer.Slice(segmentStart, length).Clear();
 
         buffer.Slice(segmentStart + length, _count - start - length).CopyTo(buffer.Slice(segmentStart));
         _count = count - length;
@@ -915,11 +881,8 @@ public ref struct ValueQueue<T>
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
     public void Clear()
     {
-        if (RuntimeHelpers.IsReferenceOrContainsReferences<T>())
-        {
-            // Clear the elements so that the GC can reclaim the references.
-            AsSpan().Clear();
-        }
+        // Clear the elements so that the GC can reclaim the references.
+        AsSpan().Clear();
 
         _count = 0;
     }
@@ -932,7 +895,6 @@ public ref struct ValueQueue<T>
     /// <returns>
     /// A shallow copy of a range of elements in the source <see cref="ValueQueue{T}"/>.
     /// </returns>
-    /// <inheritdoc cref="ThrowHelper.ThrowArgumentOutOfRangeException_IfInvalidRange(int, int, int)"/>
     public readonly ValueQueue<T> Slice(int start, int length)
     {
         // This method is needed for the slicing syntax ([i..n]) to work.
@@ -965,7 +927,6 @@ public ref struct ValueQueue<T>
     /// The destination of the elements copied from <see cref="ValueQueue{T}"/>.
     /// </param>
     /// <param name="destinationStart">The zero-based index in the destination at which copying begins.</param>
-    /// <inheritdoc cref="ThrowHelper.ThrowArgumentOutOfRangeException_IfInvalidIndex(int, int)"/>
     public readonly void CopyTo(T[] destination, int destinationStart) => CopyTo(0, destination, destinationStart, _count);
 
     /// <inheritdoc cref="CopyTo(Span{T})"/>
@@ -978,7 +939,6 @@ public ref struct ValueQueue<T>
     /// <param name="length">
     /// The number of elements to copy.
     /// </param>
-    /// <inheritdoc cref="ThrowHelper.ThrowArgumentOutOfRangeException_IfInvalidRange(int, int, int)"/>
     public readonly void CopyTo(int start, scoped Span<T> destination, int length) => AsSpan(start, length).CopyTo(destination);
 
     /// <inheritdoc cref="CopyTo(T[], int)"/>
@@ -990,7 +950,6 @@ public ref struct ValueQueue<T>
     /// </param>
     /// <param name="destinationStart">The zero-based index in the destination at which copying begins.</param>
     /// <param name="length">The number of elements to copy.</param>
-    /// <inheritdoc cref="ThrowHelper.ThrowArgumentOutOfRangeException_IfInvalidRange(int, int, int)"/>
     public readonly void CopyTo(int start, T[] destination, int destinationStart, int length)
     {
         ThrowHelper.ThrowArgumentNullException_IfNull(destination);
@@ -1033,7 +992,6 @@ public ref struct ValueQueue<T>
     /// <param name="destination">The destination of the elements copied from <see cref="ValueQueue{T}"/>.</param>
     /// <param name="destinationStart">The zero-based index in the destination at which copying begins.</param>
     /// <param name="written">The number of elements copied to the destination.</param>
-    /// <inheritdoc cref="ThrowHelper.ThrowArgumentOutOfRangeException_IfInvalidIndex(int, int)"/>
     public readonly bool TryCopyTo(T[] destination, int destinationStart, out int written)
         => TryCopyTo(0, destination, destinationStart, _count, out written);
 
@@ -1044,7 +1002,6 @@ public ref struct ValueQueue<T>
     /// <param name="destination">The destination of the elements copied from <see cref="ValueQueue{T}"/>.</param>
     /// <param name="length">The number of elements to copy.</param>
     /// <param name="written">The number of elements copied to the destination.</param>
-    /// <inheritdoc cref="ThrowHelper.ThrowArgumentOutOfRangeException_IfInvalidRange(int, int, int)"/>
     public readonly bool TryCopyTo(int start, scoped Span<T> destination, int length, out int written)
     {
         if (AsSpan(start, length).TryCopyTo(destination))
@@ -1069,7 +1026,6 @@ public ref struct ValueQueue<T>
     /// <param name="destinationStart">The zero-based index in the destination at which copying begins.</param>
     /// <param name="length">The number of elements to copy.</param>
     /// <param name="written">The number of elements copied to the array.</param>
-    /// <inheritdoc cref="ThrowHelper.ThrowArgumentOutOfRangeException_IfInvalidRange(int, int, int)"/>
     public readonly bool TryCopyTo(int start, T[] destination, int destinationStart, int length, out int written)
     {
         ThrowHelper.ThrowArgumentNullException_IfNull(destination);
@@ -1159,13 +1115,13 @@ public ref struct ValueQueue<T>
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
     public readonly Span<T>.Enumerator GetEnumerator() => AsSpan().GetEnumerator();
 
-    /// <inheritdoc cref="ThrowHelper.ThrowNotSupportedException_CannotCallEqualsOnRefStruct"/>
+    /// <inheritdoc/>
     [Obsolete("Equals(object) on ValueQueue will always throw an exception.")]
     [EditorBrowsable(EditorBrowsableState.Never)]
     public override readonly bool Equals(object? obj)
         => ThrowHelper.ThrowNotSupportedException_CannotCallEqualsOnRefStruct();
 
-    /// <inheritdoc cref="ThrowHelper.ThrowNotSupportedException_CannotCallGetHashCodeOnRefStruct"/>
+    /// <inheritdoc/>
     [Obsolete("GetHashCode() on ValueQueue will always throw an exception.")]
     [EditorBrowsable(EditorBrowsableState.Never)]
     public override readonly int GetHashCode()
@@ -1177,11 +1133,8 @@ public ref struct ValueQueue<T>
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
     public void Dispose()
     {
-        if (RuntimeHelpers.IsReferenceOrContainsReferences<T>())
-        {
-            // Clear the elements so that the GC can reclaim the references.
-            AsSpan().Clear();
-        }
+        // Clear the elements so that the GC can reclaim the references.
+        AsSpan().Clear();
 
         if (_rentedBuffer is not null)
         {
@@ -1208,7 +1161,6 @@ public ref struct ValueQueue<T>
     /// without any further expansion of its backing storage.
     /// </summary>
     /// <param name="capacity">The new capacity.</param>
-    /// <inheritdoc cref="ThrowHelper.ThrowArgumentOutOfRangeException_IfInvalidCapacity(int, int)"/>
     public void TrimExcess(int capacity)
     {
         if (capacity < _buffer.Length)
@@ -1264,11 +1216,8 @@ public ref struct ValueQueue<T>
         T[]? oldRentedBuffer = _rentedBuffer;
         AsSpan().CopyTo(newRentedBuffer);
 
-        if (RuntimeHelpers.IsReferenceOrContainsReferences<T>())
-        {
-            // Clear the elements so that the GC can reclaim the references.
-            AsSpan().Clear();
-        }
+        // Clear the elements so that the GC can reclaim the references.
+        AsSpan().Clear();
 
         _buffer = _rentedBuffer = newRentedBuffer;
         _head = 0;

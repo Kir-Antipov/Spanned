@@ -109,7 +109,6 @@ public ref partial struct ValueStringBuilder
     /// <exception cref="ArgumentNullException">
     /// <paramref name="value"/> is null, and <paramref name="start"/> and <paramref name="length"/> are not zero.
     /// </exception>
-    /// <inheritdoc cref="ThrowHelper.ThrowArgumentOutOfRangeException_IfInvalidRange(int, int, int)"/>
     public void Append(string? value, int start, int length)
     {
         if (start is not 0 && length is not 0)
@@ -134,7 +133,6 @@ public ref partial struct ValueStringBuilder
     /// <param name="value">The string builder that contains the substring to append.</param>
     /// <param name="start">The starting position of the substring within value.</param>
     /// <param name="length">The number of characters in value to append.</param>
-    /// <inheritdoc cref="ThrowHelper.ThrowArgumentOutOfRangeException_IfInvalidRange(int, int, int)"/>
     public void Append(scoped in ValueStringBuilder value, int start, int length)
     {
         ReadOnlySpan<char> valueSpan = value.AsSpan(start, length);
@@ -186,7 +184,10 @@ public ref partial struct ValueStringBuilder
             Grow(valueCount);
         }
 
-        MemoryMarshal.CreateReadOnlySpan(ref Unsafe.AsRef(in value), valueCount).CopyTo(_buffer.Slice(length));
+        Span<char> target = _buffer.Slice(length);
+        for (int i = 0; i < valueCount; i++)
+            target[i] = Unsafe.Add(ref Unsafe.AsRef(in value), i);
+
         _length = length + valueCount;
     }
 
@@ -236,7 +237,6 @@ public ref partial struct ValueStringBuilder
     /// <exception cref="ArgumentNullException">
     /// <paramref name="value"/> is null, and <paramref name="start"/> and <paramref name="length"/> are not zero.
     /// </exception>
-    /// <inheritdoc cref="ThrowHelper.ThrowArgumentOutOfRangeException_IfInvalidRange(int, int, int)"/>
     public void Append(char[]? value, int start, int length)
     {
         if (start is not 0 && length is not 0)
@@ -283,264 +283,76 @@ public ref partial struct ValueStringBuilder
     /// instance.
     /// </summary>
     /// <param name="value">The value to append.</param>
-    [SkipLocalsInit]
-    public void Append(byte value)
-    {
-        // JIT does not inline methods that use stackalloc yet, so
-        // we cannot move this logic to a shared location, sadly.
-        Span<char> chars = stackalloc char[StringHelper.MaxByteStringLength];
-
-        // Since the `byte` data type is unsigned, its formatting is not influenced by the current culture.
-        // The current culture could provide a custom sign, which might be longer than one symbol,
-        // but in the case of `byte`, this operation will always succeed.
-        value.TryFormat(chars, out int charsWritten, format: default, provider: null);
-        Append(chars.Slice(0, charsWritten));
-    }
+    public void Append(byte value) => Append(value.ToString());
 
     /// <summary>
     /// Appends the string representation of a specified 8-bit signed integer to this instance.
     /// </summary>
     /// <param name="value">The value to append.</param>
     [CLSCompliant(false)]
-    [SkipLocalsInit]
-    public void Append(sbyte value)
-    {
-        // JIT does not inline methods that use stackalloc yet, so
-        // we cannot move this logic to a shared location, sadly.
-        Span<char> chars = stackalloc char[StringHelper.MaxSbyteStringLength];
-
-        if (value.TryFormat(chars, out int charsWritten, format: default, provider: null))
-        {
-            Append(chars.Slice(0, charsWritten));
-        }
-        else
-        {
-            // This path should never be taken. But if it is,
-            // it means that there's something wrong with the current culture.
-            // We still need to make it work, but we must not optimize this case,
-            // since it will actually degrade the overall performance and increase
-            // the assembly size for nothing.
-            AppendString(value.ToString());
-        }
-    }
+    public void Append(sbyte value) => Append(value.ToString());
 
     /// <summary>
     /// Appends the string representation of a specified 16-bit signed integer to this
     /// instance.
     /// </summary>
     /// <param name="value">The value to append.</param>
-    [SkipLocalsInit]
-    public void Append(short value)
-    {
-        // JIT does not inline methods that use stackalloc yet, so
-        // we cannot move this logic to a shared location, sadly.
-        Span<char> chars = stackalloc char[StringHelper.MaxInt16StringLength];
-
-        if (value.TryFormat(chars, out int charsWritten, format: default, provider: null))
-        {
-            Append(chars.Slice(0, charsWritten));
-        }
-        else
-        {
-            // This path should never be taken. But if it is,
-            // it means that there's something wrong with the current culture.
-            // We still need to make it work, but we must not optimize this case,
-            // since it will actually degrade the overall performance and increase
-            // the assembly size for nothing.
-            AppendString(value.ToString());
-        }
-    }
+    public void Append(short value) => Append(value.ToString());
 
     /// <summary>
     /// Appends the string representation of a specified 16-bit unsigned integer to this instance.
     /// </summary>
     /// <param name="value">The value to append.</param>
     [CLSCompliant(false)]
-    [SkipLocalsInit]
-    public void Append(ushort value)
-    {
-        // JIT does not inline methods that use stackalloc yet, so
-        // we cannot move this logic to a shared location, sadly.
-        Span<char> chars = stackalloc char[StringHelper.MaxUInt16StringLength];
-
-        // Since the `ushort` data type is unsigned, its formatting is not influenced by the current culture.
-        // The current culture could provide a custom sign, which might be longer than one symbol,
-        // but in the case of `ushort`, this operation will always succeed.
-        value.TryFormat(chars, out int charsWritten, format: default, provider: null);
-        Append(chars.Slice(0, charsWritten));
-    }
+    public void Append(ushort value) => Append(value.ToString());
 
     /// <summary>
     /// Appends the string representation of a specified 32-bit signed integer to this
     /// instance.
     /// </summary>
     /// <param name="value">The value to append.</param>
-    [SkipLocalsInit]
-    public void Append(int value)
-    {
-        // JIT does not inline methods that use stackalloc yet, so
-        // we cannot move this logic to a shared location, sadly.
-        Span<char> chars = stackalloc char[StringHelper.MaxInt32StringLength];
-
-        if (value.TryFormat(chars, out int charsWritten, format: default, provider: null))
-        {
-            Append(chars.Slice(0, charsWritten));
-        }
-        else
-        {
-            // This path should never be taken. But if it is,
-            // it means that there's something wrong with the current culture.
-            // We still need to make it work, but we must not optimize this case,
-            // since it will actually degrade the overall performance and increase
-            // the assembly size for nothing.
-            AppendString(value.ToString());
-        }
-    }
+    public void Append(int value) => Append(value.ToString());
 
     /// <summary>
     /// Appends the string representation of a specified 32-bit unsigned integer to this instance.
     /// </summary>
     /// <param name="value">The value to append.</param>
     [CLSCompliant(false)]
-    [SkipLocalsInit]
-    public void Append(uint value)
-    {
-        // JIT does not inline methods that use stackalloc yet, so
-        // we cannot move this logic to a shared location, sadly.
-        Span<char> chars = stackalloc char[StringHelper.MaxUInt32StringLength];
-
-        // Since the `uint` data type is unsigned, its formatting is not influenced by the current culture.
-        // The current culture could provide a custom sign, which might be longer than one symbol,
-        // but in the case of `uint`, this operation will always succeed.
-        value.TryFormat(chars, out int charsWritten, format: default, provider: null);
-        Append(chars.Slice(0, charsWritten));
-    }
+    public void Append(uint value) => Append(value.ToString());
 
     /// <summary>
     /// Appends the string representation of a specified 64-bit signed integer to this
     /// instance.
     /// </summary>
     /// <param name="value">The value to append.</param>
-    [SkipLocalsInit]
-    public void Append(long value)
-    {
-        // JIT does not inline methods that use stackalloc yet, so
-        // we cannot move this logic to a shared location, sadly.
-        Span<char> chars = stackalloc char[StringHelper.MaxInt64StringLength];
-
-        if (value.TryFormat(chars, out int charsWritten, format: default, provider: null))
-        {
-            Append(chars.Slice(0, charsWritten));
-        }
-        else
-        {
-            // This path should never be taken. But if it is,
-            // it means that there's something wrong with the current culture.
-            // We still need to make it work, but we must not optimize this case,
-            // since it will actually degrade the overall performance and increase
-            // the assembly size for nothing.
-            AppendString(value.ToString());
-        }
-    }
+    public void Append(long value) => Append(value.ToString());
 
     /// <summary>
     /// Appends the string representation of a specified 64-bit unsigned integer to this
     /// </summary>
     /// <param name="value">The value to append.</param>
     [CLSCompliant(false)]
-    [SkipLocalsInit]
-    public void Append(ulong value)
-    {
-        // JIT does not inline methods that use stackalloc yet, so
-        // we cannot move this logic to a shared location, sadly.
-        Span<char> chars = stackalloc char[StringHelper.MaxUInt64StringLength];
-
-        // Since the `ulong` data type is unsigned, its formatting is not influenced by the current culture.
-        // The current culture could provide a custom sign, which might be longer than one symbol,
-        // but in the case of `ulong`, this operation will always succeed.
-        value.TryFormat(chars, out int charsWritten, format: default, provider: null);
-        Append(chars.Slice(0, charsWritten));
-    }
+    public void Append(ulong value) => Append(value.ToString());
 
     /// <summary>
     /// Appends the string representation of a specified single-precision floating-point
     /// number to this instance.
     /// </summary>
     /// <param name="value">The value to append.</param>
-    [SkipLocalsInit]
-    public void Append(float value)
-    {
-        // JIT does not inline methods that use stackalloc yet, so
-        // we cannot move this logic to a shared location, sadly.
-        Span<char> chars = stackalloc char[StringHelper.MaxSingleStringLength];
-
-        if (value.TryFormat(chars, out int charsWritten, format: default, provider: null))
-        {
-            Append(chars.Slice(0, charsWritten));
-        }
-        else
-        {
-            // This path should never be taken. But if it is,
-            // it means that there's something wrong with the current culture.
-            // We still need to make it work, but we must not optimize this case,
-            // since it will actually degrade the overall performance and increase
-            // the assembly size for nothing.
-            AppendString(value.ToString());
-        }
-    }
+    public void Append(float value) => Append(value.ToString());
 
     /// <summary>
     /// Appends the string representation of a specified double-precision floating-point
     /// number to this instance.
     /// </summary>
     /// <param name="value">The value to append.</param>
-    [SkipLocalsInit]
-    public void Append(double value)
-    {
-        // JIT does not inline methods that use stackalloc yet, so
-        // we cannot move this logic to a shared location, sadly.
-        Span<char> chars = stackalloc char[StringHelper.MaxDoubleStringLength];
-
-        if (value.TryFormat(chars, out int charsWritten, format: default, provider: null))
-        {
-            Append(chars.Slice(0, charsWritten));
-        }
-        else
-        {
-            // This path should never be taken. But if it is,
-            // it means that there's something wrong with the current culture.
-            // We still need to make it work, but we must not optimize this case,
-            // since it will actually degrade the overall performance and increase
-            // the assembly size for nothing.
-            AppendString(value.ToString());
-        }
-    }
+    public void Append(double value) => Append(value.ToString());
 
     /// <summary>
     /// Appends the string representation of a specified decimal number to this instance.
     /// </summary>
     /// <param name="value">The value to append.</param>
-    [SkipLocalsInit]
-    public void Append(decimal value)
-    {
-        // JIT does not inline methods that use stackalloc yet, so
-        // we cannot move this logic to a shared location, sadly.
-        Span<char> chars = stackalloc char[StringHelper.MaxDecimalStringLength];
-
-        if (value.TryFormat(chars, out int charsWritten, format: default, provider: null))
-        {
-            Append(chars.Slice(0, charsWritten));
-        }
-        else
-        {
-            // This path should never be taken. But if it is,
-            // it means that there's something wrong with the current culture.
-            // We still need to make it work, but we must not optimize this case,
-            // since it will actually degrade the overall performance and increase
-            // the assembly size for nothing.
-            AppendString(value.ToString());
-        }
-    }
+    public void Append(decimal value) => Append(value.ToString());
 
     /// <summary>
     /// Appends a formatted representation of the specified value to this instance.

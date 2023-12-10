@@ -41,7 +41,6 @@ public ref struct ValueList<T>
     /// is empty and has the specified initial capacity.
     /// </summary>
     /// <param name="capacity">The number of elements that the new list can initially store.</param>
-    /// <inheritdoc cref="ThrowHelper.ThrowArgumentOutOfRangeException_IfInvalidCapacity(int)"/>
     public ValueList(int capacity)
     {
         _rentedBuffer = ArrayPool<T>.Shared.Rent(capacity);
@@ -66,7 +65,6 @@ public ref struct ValueList<T>
     /// </summary>
     /// <param name="collection">The collection whose elements are copied to the new list.</param>
     /// <param name="capacity">The number of elements that the new list can initially store.</param>
-    /// <inheritdoc cref="ThrowHelper.ThrowArgumentOutOfRangeException_IfInvalidCapacity(int, int)"/>
     public ValueList(scoped ReadOnlySpan<T> collection, int capacity)
     {
         ThrowHelper.ThrowArgumentOutOfRangeException_IfInvalidCapacity(capacity, collection.Length);
@@ -119,20 +117,19 @@ public ref struct ValueList<T>
     /// <param name="list">The list to be converted.</param>
     /// <returns>A span covering the content of the <see cref="ValueList{T}"/>.</returns>
     public static implicit operator ReadOnlySpan<T>(ValueList<T> list)
-        => MemoryMarshal.CreateReadOnlySpan(ref MemoryMarshal.GetReference(list._buffer), list._count);
+        => list._buffer.Slice(0, list._count);
 
     /// <summary>
     /// Returns a span that represents the content of the <see cref="ValueList{T}"/>.
     /// </summary>
     /// <returns>A span covering the content of the <see cref="ValueList{T}"/>.</returns>
-    public readonly Span<T> AsSpan() => MemoryMarshal.CreateSpan(ref MemoryMarshal.GetReference(_buffer), _count);
+    public readonly Span<T> AsSpan() => _buffer.Slice(0, _count);
 
     /// <summary>
     /// Returns a span that represents a segment of the list starting from the specified index.
     /// </summary>
     /// <param name="start">The start index of the segment.</param>
     /// <returns>A span covering the segment of the list.</returns>
-    /// <inheritdoc cref="ThrowHelper.ThrowArgumentOutOfRangeException_IfInvalidRange(int, int)"/>
     public readonly Span<T> AsSpan(int start) => AsSpan(start, _count - start);
 
     /// <summary>
@@ -141,13 +138,11 @@ public ref struct ValueList<T>
     /// <param name="start">The start index of the segment.</param>
     /// <param name="length">The length of the segment.</param>
     /// <returns>A span covering the segment of the list.</returns>
-    /// <inheritdoc cref="ThrowHelper.ThrowArgumentOutOfRangeException_IfInvalidRange(int, int, int)"/>
     public readonly Span<T> AsSpan(int start, int length)
     {
         ThrowHelper.ThrowArgumentOutOfRangeException_IfInvalidRange(start, length, _count);
 
-        // Skip additional bound checks.
-        return MemoryMarshal.CreateSpan(ref Unsafe.Add(ref MemoryMarshal.GetReference(_buffer), start), length);
+        return _buffer.Slice(start, length);
     }
 
     /// <summary>
@@ -166,7 +161,6 @@ public ref struct ValueList<T>
     /// <summary>
     /// The number of elements contained in the <see cref="ValueList{T}"/>.
     /// </summary>
-    /// <inheritdoc cref="ThrowHelper.ThrowArgumentOutOfRangeException_IfInvalidCount(int, int)"/>
     public int Count
     {
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
@@ -183,7 +177,6 @@ public ref struct ValueList<T>
     /// The total number of elements the internal data structure can hold
     /// without resizing.
     /// </summary>
-    /// <inheritdoc cref="ThrowHelper.ThrowArgumentOutOfRangeException_IfInvalidCapacity(int, int)"/>
     public int Capacity
     {
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
@@ -204,7 +197,6 @@ public ref struct ValueList<T>
     /// </summary>
     /// <param name="index">The zero-based index of the element to get or set.</param>
     /// <returns>The element at the specified index.</returns>
-    /// <inheritdoc cref="ThrowHelper.ThrowArgumentOutOfRangeException_IfInvalidIndex(int, int)"/>
     public readonly ref T this[int index]
     {
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
@@ -242,7 +234,6 @@ public ref struct ValueList<T>
     /// </summary>
     /// <returns>The new capacity of this list.</returns>
     /// <param name="capacity">The minimum capacity to ensure.</param>
-    /// <inheritdoc cref="ThrowHelper.ThrowArgumentOutOfRangeException_IfInvalidCapacity(int)"/>
     public int EnsureCapacity(int capacity)
     {
         ThrowHelper.ThrowArgumentOutOfRangeException_IfInvalidCapacity(capacity);
@@ -306,7 +297,6 @@ public ref struct ValueList<T>
     /// </summary>
     /// <param name="length">The length of the span to reserve.</param>
     /// <returns>A span that represents the reserved space.</returns>
-    /// <inheritdoc cref="ThrowHelper.ThrowArgumentOutOfRangeException_IfInvalidLength(int)"/>
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
     public Span<T> AddSpan(int length)
     {
@@ -420,7 +410,6 @@ public ref struct ValueList<T>
     /// <para/>
     /// The value can be <c>null</c> for reference types.
     /// </param>
-    /// <inheritdoc cref="ThrowHelper.ThrowArgumentOutOfRangeException_IfInvalidIndex(int, int)"/>
     public void Insert(int index, T item)
     {
         if ((uint)index > (uint)_count)
@@ -452,7 +441,6 @@ public ref struct ValueList<T>
     /// The collection can contain elements that are <c>null</c>, if type
     /// <typeparamref name="T"/> is a reference type.
     /// </param>
-    /// <inheritdoc cref="ThrowHelper.ThrowArgumentOutOfRangeException_IfInvalidIndex(int, int)"/>
     public void InsertRange(int index, scoped ReadOnlySpan<T> collection)
     {
         if ((uint)index > (uint)_count)
@@ -570,17 +558,13 @@ public ref struct ValueList<T>
     /// Removes the element at the specified index of the <see cref="ValueList{T}"/>.
     /// </summary>
     /// <param name="index">The zero-based index of the element to remove.</param>
-    /// <inheritdoc cref="ThrowHelper.ThrowArgumentOutOfRangeException_IfInvalidIndex(int, int)"/>
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
     public void RemoveAt(int index)
     {
         ThrowHelper.ThrowArgumentOutOfRangeException_IfInvalidIndex(index, _count);
 
-        if (RuntimeHelpers.IsReferenceOrContainsReferences<T>())
-        {
-            // Clear the element so that the GC can reclaim its reference.
-            _buffer[index] = default!;
-        }
+        // Clear the element so that the GC can reclaim its reference.
+        _buffer[index] = default!;
 
         _buffer.Slice(index + 1, _count - index - 1).CopyTo(_buffer.Slice(index));
         _count--;
@@ -591,16 +575,12 @@ public ref struct ValueList<T>
     /// </summary>
     /// <param name="start">The zero-based starting index of the range of elements to remove.</param>
     /// <param name="length">The number of elements to remove.</param>
-    /// <inheritdoc cref="ThrowHelper.ThrowArgumentOutOfRangeException_IfInvalidRange(int, int, int)"/>
     public void RemoveRange(int start, int length)
     {
         ThrowHelper.ThrowArgumentOutOfRangeException_IfInvalidRange(start, length, _count);
 
-        if (RuntimeHelpers.IsReferenceOrContainsReferences<T>())
-        {
-            // Clear the elements so that the GC can reclaim the references.
-            AsSpan(start, length).Clear();
-        }
+        // Clear the elements so that the GC can reclaim the references.
+        AsSpan(start, length).Clear();
 
         _buffer.Slice(start + length).CopyTo(_buffer.Slice(start));
         _count -= length;
@@ -624,11 +604,8 @@ public ref struct ValueList<T>
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
     public void Clear()
     {
-        if (RuntimeHelpers.IsReferenceOrContainsReferences<T>())
-        {
-            // Clear the elements so that the GC can reclaim the references.
-            AsSpan().Clear();
-        }
+        // Clear the elements so that the GC can reclaim the references.
+        AsSpan().Clear();
 
         _count = 0;
     }
@@ -656,7 +633,6 @@ public ref struct ValueList<T>
     /// The zero-based starting index of the search.
     /// 0 (zero) is valid in an empty list.
     /// </param>
-    /// <inheritdoc cref="ThrowHelper.ThrowArgumentOutOfRangeException_IfInvalidIndex(int, int)"/>
     public readonly int IndexOf(T item, int index) => IndexOf(item, index, _count - index);
 
     /// <inheritdoc cref="IndexOf(T)"/>
@@ -669,7 +645,6 @@ public ref struct ValueList<T>
     /// 0 (zero) is valid in an empty list.
     /// </param>
     /// <param name="length">The number of elements in the section to search.</param>
-    /// <inheritdoc cref="ThrowHelper.ThrowArgumentOutOfRangeException_IfInvalidRange(int, int, int)"/>
     public readonly int IndexOf(T item, int start, int length)
     {
         ThrowHelper.ThrowArgumentOutOfRangeException_IfInvalidRange(start, length, _count);
@@ -698,7 +673,6 @@ public ref struct ValueList<T>
     /// The value can be <c>null</c> for reference types.
     /// </param>
     /// <param name="index">The zero-based starting index of the backward search.</param>
-    /// <inheritdoc cref="ThrowHelper.ThrowArgumentOutOfRangeException_IfInvalidIndex(int, int)"/>
     public readonly int LastIndexOf(T item, int index)
     {
         // Don't use (uint) here.
@@ -718,7 +692,6 @@ public ref struct ValueList<T>
     /// </param>
     /// <param name="start">The zero-based starting index of the backward search.</param>
     /// <param name="length">The number of elements in the section to search.</param>
-    /// <inheritdoc cref="ThrowHelper.ThrowArgumentOutOfRangeException_IfInvalidRange(int, int, int)"/>
     public readonly int LastIndexOf(T item, int start, int length)
     {
         // Very f-ing funny.
@@ -783,7 +756,6 @@ public ref struct ValueList<T>
     /// -or-
     /// <c>null</c> to use the default comparer <see cref="Comparer{T}.Default"/>.
     /// </param>
-    /// <inheritdoc cref="ThrowHelper.ThrowArgumentOutOfRangeException_IfInvalidRange(int, int, int)"/>
     public readonly int BinarySearch(int start, int length, T item, IComparer<T>? comparer)
     {
         ThrowHelper.ThrowArgumentOutOfRangeException_IfInvalidRange(start, length, _count);
@@ -844,7 +816,6 @@ public ref struct ValueList<T>
     /// <param name="predicate">
     /// The delegate that defines the conditions of the elements to search for.
     /// </param>
-    /// <inheritdoc cref="ThrowHelper.ThrowArgumentOutOfRangeException_IfInvalidIndex(int, int)"/>
     public readonly int FindIndex(int start, Predicate<T> predicate)
         => FindIndex(start, _count - start, predicate);
 
@@ -854,7 +825,6 @@ public ref struct ValueList<T>
     /// <param name="predicate">
     /// The delegate that defines the conditions of the elements to search for.
     /// </param>
-    /// <inheritdoc cref="ThrowHelper.ThrowArgumentOutOfRangeException_IfInvalidRange(int, int, int)"/>
     public readonly int FindIndex(int start, int length, Predicate<T> predicate)
     {
         ThrowHelper.ThrowArgumentOutOfRangeException_IfInvalidRange(start, length, _count);
@@ -909,7 +879,6 @@ public ref struct ValueList<T>
     /// <param name="predicate">
     /// The delegate that defines the conditions of the elements to search for.
     /// </param>
-    /// <inheritdoc cref="ThrowHelper.ThrowArgumentOutOfRangeException_IfInvalidIndex(int, int)"/>
     public readonly int FindLastIndex(int start, Predicate<T> predicate)
     {
         // Additional useless null-check to satisfy unit tests.
@@ -931,7 +900,6 @@ public ref struct ValueList<T>
     /// <param name="predicate">
     /// The delegate that defines the conditions of the elements to search for.
     /// </param>
-    /// <inheritdoc cref="ThrowHelper.ThrowArgumentOutOfRangeException_IfInvalidRange(int, int, int)"/>
     public readonly int FindLastIndex(int start, int length, Predicate<T> predicate)
     {
         ThrowHelper.ThrowArgumentNullException_IfNull(predicate);
@@ -1074,7 +1042,6 @@ public ref struct ValueList<T>
     /// The <see cref="IComparer{T}"/> implementation to use when comparing elements, or <c>null</c>
     /// to use the default comparer.
     /// </param>
-    /// <inheritdoc cref="ThrowHelper.ThrowArgumentOutOfRangeException_IfInvalidRange(int, int, int)"/>
     public readonly void Sort(int start, int length, IComparer<T>? comparer)
     {
         ThrowHelper.ThrowArgumentOutOfRangeException_IfInvalidRange(start, length, _count);
@@ -1090,7 +1057,6 @@ public ref struct ValueList<T>
     /// <inheritdoc cref="Reverse()"/>
     /// <param name="start">The zero-based starting index of the range to reverse.</param>
     /// <param name="length">The number of elements in the range to reverse.</param>
-    /// <inheritdoc cref="ThrowHelper.ThrowArgumentOutOfRangeException_IfInvalidRange(int, int, int)"/>
     public readonly void Reverse(int start, int length)
     {
         ThrowHelper.ThrowArgumentOutOfRangeException_IfInvalidRange(start, length, _count);
@@ -1135,7 +1101,6 @@ public ref struct ValueList<T>
     /// <returns>
     /// A shallow copy of a range of elements in the source <see cref="ValueList{T}"/>.
     /// </returns>
-    /// <inheritdoc cref="ThrowHelper.ThrowArgumentOutOfRangeException_IfInvalidRange(int, int, int)"/>
     public readonly ValueList<T> GetRange(int start, int length)
     {
         ThrowHelper.ThrowArgumentOutOfRangeException_IfInvalidRange(start, length, _count);
@@ -1176,7 +1141,6 @@ public ref struct ValueList<T>
     /// The destination of the elements copied from <see cref="ValueList{T}"/>.
     /// </param>
     /// <param name="destinationStart">The zero-based index in the destination at which copying begins.</param>
-    /// <inheritdoc cref="ThrowHelper.ThrowArgumentOutOfRangeException_IfInvalidIndex(int, int)"/>
     public readonly void CopyTo(T[] destination, int destinationStart) => CopyTo(0, destination, destinationStart, _count);
 
     /// <inheritdoc cref="CopyTo(Span{T})"/>
@@ -1189,7 +1153,6 @@ public ref struct ValueList<T>
     /// <param name="length">
     /// The number of elements to copy.
     /// </param>
-    /// <inheritdoc cref="ThrowHelper.ThrowArgumentOutOfRangeException_IfInvalidRange(int, int, int)"/>
     public readonly void CopyTo(int start, scoped Span<T> destination, int length) => AsSpan(start, length).CopyTo(destination);
 
     /// <inheritdoc cref="CopyTo(T[], int)"/>
@@ -1201,7 +1164,6 @@ public ref struct ValueList<T>
     /// </param>
     /// <param name="destinationStart">The zero-based index in the destination at which copying begins.</param>
     /// <param name="length">The number of elements to copy.</param>
-    /// <inheritdoc cref="ThrowHelper.ThrowArgumentOutOfRangeException_IfInvalidRange(int, int, int)"/>
     public readonly void CopyTo(int start, T[] destination, int destinationStart, int length)
     {
         ThrowHelper.ThrowArgumentNullException_IfNull(destination);
@@ -1244,7 +1206,6 @@ public ref struct ValueList<T>
     /// <param name="destination">The destination of the elements copied from <see cref="ValueList{T}"/>.</param>
     /// <param name="destinationStart">The zero-based index in the destination at which copying begins.</param>
     /// <param name="written">The number of elements copied to the destination.</param>
-    /// <inheritdoc cref="ThrowHelper.ThrowArgumentOutOfRangeException_IfInvalidIndex(int, int)"/>
     public readonly bool TryCopyTo(T[] destination, int destinationStart, out int written)
         => TryCopyTo(0, destination, destinationStart, _count, out written);
 
@@ -1255,7 +1216,6 @@ public ref struct ValueList<T>
     /// <param name="destination">The destination of the elements copied from <see cref="ValueList{T}"/>.</param>
     /// <param name="length">The number of elements to copy.</param>
     /// <param name="written">The number of elements copied to the destination.</param>
-    /// <inheritdoc cref="ThrowHelper.ThrowArgumentOutOfRangeException_IfInvalidRange(int, int, int)"/>
     public readonly bool TryCopyTo(int start, scoped Span<T> destination, int length, out int written)
     {
         if (AsSpan(start, length).TryCopyTo(destination))
@@ -1280,9 +1240,7 @@ public ref struct ValueList<T>
     /// <param name="destinationStart">The zero-based index in the destination at which copying begins.</param>
     /// <param name="length">The number of elements to copy.</param>
     /// <param name="written">The number of elements copied to the array.</param>
-    /// <inheritdoc cref="ThrowHelper.ThrowArgumentOutOfRangeException_IfInvalidRange(int, int, int)"/>
-    public readonly
-     bool TryCopyTo(int start, T[] destination, int destinationStart, int length, out int written)
+    public readonly bool TryCopyTo(int start, T[] destination, int destinationStart, int length, out int written)
     {
         ThrowHelper.ThrowArgumentNullException_IfNull(destination);
 
@@ -1391,13 +1349,13 @@ public ref struct ValueList<T>
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
     public readonly Span<T>.Enumerator GetEnumerator() => AsSpan().GetEnumerator();
 
-    /// <inheritdoc cref="ThrowHelper.ThrowNotSupportedException_CannotCallEqualsOnRefStruct"/>
+    /// <inheritdoc/>
     [Obsolete("Equals(object) on ValueList will always throw an exception.")]
     [EditorBrowsable(EditorBrowsableState.Never)]
     public override readonly bool Equals(object? obj)
         => ThrowHelper.ThrowNotSupportedException_CannotCallEqualsOnRefStruct();
 
-    /// <inheritdoc cref="ThrowHelper.ThrowNotSupportedException_CannotCallGetHashCodeOnRefStruct"/>
+    /// <inheritdoc/>
     [Obsolete("GetHashCode() on ValueList will always throw an exception.")]
     [EditorBrowsable(EditorBrowsableState.Never)]
     public override readonly int GetHashCode()
@@ -1409,11 +1367,8 @@ public ref struct ValueList<T>
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
     public void Dispose()
     {
-        if (RuntimeHelpers.IsReferenceOrContainsReferences<T>())
-        {
-            // Clear the elements so that the GC can reclaim the references.
-            AsSpan().Clear();
-        }
+        // Clear the elements so that the GC can reclaim the references.
+        AsSpan().Clear();
 
         if (_rentedBuffer is not null)
         {
@@ -1440,7 +1395,6 @@ public ref struct ValueList<T>
     /// without any further expansion of its backing storage.
     /// </summary>
     /// <param name="capacity">The new capacity.</param>
-    /// <inheritdoc cref="ThrowHelper.ThrowArgumentOutOfRangeException_IfInvalidCapacity(int, int)"/>
     public void TrimExcess(int capacity)
     {
         if (capacity < _buffer.Length)
@@ -1478,11 +1432,8 @@ public ref struct ValueList<T>
         T[]? oldRentedBuffer = _rentedBuffer;
         AsSpan().CopyTo(newRentedBuffer);
 
-        if (RuntimeHelpers.IsReferenceOrContainsReferences<T>())
-        {
-            // Clear the elements so that the GC can reclaim the references.
-            AsSpan().Clear();
-        }
+        // Clear the elements so that the GC can reclaim the references.
+        AsSpan().Clear();
 
         _buffer = _rentedBuffer = newRentedBuffer;
         if (oldRentedBuffer is not null)

@@ -8,7 +8,6 @@ public ref partial struct ValueStringBuilder
     /// </summary>
     /// <param name="index">The position in this instance where insertion begins.</param>
     /// <param name="value">The value to insert.</param>
-    /// <inheritdoc cref="ThrowHelper.ThrowArgumentOutOfRangeException_IfInvalidIndex(int, int)"/>
     public void Insert(int index, char value)
     {
         if ((uint)index > (uint)_length)
@@ -37,7 +36,6 @@ public ref partial struct ValueStringBuilder
     /// <param name="value">The value to insert.</param>
     /// <param name="repeatCount">The number of times to insert the value.</param>
     /// <exception cref="ArgumentOutOfRangeException"><paramref name="repeatCount"/> is less than zero.</exception>
-    /// <inheritdoc cref="ThrowHelper.ThrowArgumentOutOfRangeException_IfInvalidIndex(int, int)"/>
     public void Insert(int index, char value, int repeatCount)
     {
         ThrowHelper.ThrowArgumentOutOfRangeException_IfInvalidLength(repeatCount);
@@ -64,7 +62,6 @@ public ref partial struct ValueStringBuilder
     /// </summary>
     /// <param name="index">The position in this instance where insertion begins.</param>
     /// <param name="value">The value to insert.</param>
-    /// <inheritdoc cref="ThrowHelper.ThrowArgumentOutOfRangeException_IfInvalidIndex(int, int)"/>
     public void Insert(int index, string? value)
     {
         if (value is null)
@@ -78,7 +75,6 @@ public ref partial struct ValueStringBuilder
     /// </summary>
     /// <param name="index">The position in this instance where insertion begins.</param>
     /// <param name="value">The value to insert.</param>
-    /// <inheritdoc cref="ThrowHelper.ThrowArgumentOutOfRangeException_IfInvalidIndex(int, int)"/>
     [MethodImpl(MethodImplOptions.NoInlining)]
     private void InsertString(int index, string value)
         => Insert(index, value.AsSpan());
@@ -124,7 +120,6 @@ public ref partial struct ValueStringBuilder
     /// <param name="value">The value to insert.</param>
     /// <param name="repeatCount">The number of times to insert value.</param>
     /// <exception cref="ArgumentOutOfRangeException"><paramref name="repeatCount"/> is less than zero.</exception>
-    /// <inheritdoc cref="ThrowHelper.ThrowArgumentOutOfRangeException_IfInvalidIndex(int, int)"/>
     public void Insert(int index, string? value, int repeatCount)
     {
         ThrowHelper.ThrowArgumentOutOfRangeException_IfInvalidLength(repeatCount);
@@ -161,7 +156,6 @@ public ref partial struct ValueStringBuilder
     /// </summary>
     /// <param name="index">The position in this instance where insertion begins.</param>
     /// <param name="value">The value to insert.</param>
-    /// <inheritdoc cref="ThrowHelper.ThrowArgumentOutOfRangeException_IfInvalidIndex(int, int)"/>
     public void Insert(int index, scoped in ValueStringBuilder value)
         => Insert(index, value, 0, value._length);
 
@@ -217,7 +211,6 @@ public ref partial struct ValueStringBuilder
     /// </summary>
     /// <param name="index">The position in this instance where insertion begins.</param>
     /// <param name="value">The value to insert.</param>
-    /// <inheritdoc cref="ThrowHelper.ThrowArgumentOutOfRangeException_IfInvalidIndex(int, int)"/>
     public void Insert(int index, scoped ReadOnlySpan<char> value)
     {
         if ((uint)index > (uint)_length)
@@ -246,7 +239,6 @@ public ref partial struct ValueStringBuilder
     /// </summary>
     /// <param name="index">The position in this instance where insertion begins.</param>
     /// <param name="value">The value to insert.</param>
-    /// <inheritdoc cref="ThrowHelper.ThrowArgumentOutOfRangeException_IfInvalidIndex(int, int)"/>
     public void Insert(int index, char[]? value)
     {
         if (value is null)
@@ -294,7 +286,6 @@ public ref partial struct ValueStringBuilder
     /// </summary>
     /// <param name="index">The position in this instance where insertion begins.</param>
     /// <param name="value">The value to insert.</param>
-    /// <inheritdoc cref="ThrowHelper.ThrowArgumentOutOfRangeException_IfInvalidIndex(int, int)"/>
     public void Insert(int index, ReadOnlyMemory<char> value)
         => Insert(index, value.Span);
 
@@ -304,7 +295,6 @@ public ref partial struct ValueStringBuilder
     /// </summary>
     /// <param name="index">The position in this instance where insertion begins.</param>
     /// <param name="value">The value to insert.</param>
-    /// <inheritdoc cref="ThrowHelper.ThrowArgumentOutOfRangeException_IfInvalidIndex(int, int)"/>
     public void Insert(int index, object? value)
     {
         if (value is not null)
@@ -319,7 +309,6 @@ public ref partial struct ValueStringBuilder
     /// </summary>
     /// <param name="index">The position in this instance where insertion begins.</param>
     /// <param name="value">The value to insert.</param>
-    /// <inheritdoc cref="ThrowHelper.ThrowArgumentOutOfRangeException_IfInvalidIndex(int, int)"/>
     public void Insert(int index, bool value)
     {
         // `ToString()` on booleans does not allocate,
@@ -333,20 +322,7 @@ public ref partial struct ValueStringBuilder
     /// </summary>
     /// <param name="index">The position in this instance where insertion begins.</param>
     /// <param name="value">The value to insert.</param>
-    /// <inheritdoc cref="ThrowHelper.ThrowArgumentOutOfRangeException_IfInvalidIndex(int, int)"/>
-    [SkipLocalsInit]
-    public void Insert(int index, byte value)
-    {
-        // JIT does not inline methods that use stackalloc yet, so
-        // we cannot move this logic to a shared location, sadly.
-        Span<char> chars = stackalloc char[StringHelper.MaxByteStringLength];
-
-        // Since the `byte` data type is unsigned, its formatting is not influenced by the current culture.
-        // The current culture could provide a custom sign, which might be longer than one symbol,
-        // but in the case of `byte`, this operation will always succeed.
-        value.TryFormat(chars, out int charsWritten, format: default, provider: null);
-        Insert(index, chars.Slice(0, charsWritten));
-    }
+    public void Insert(int index, byte value) => Insert(index, value.ToString());
 
     /// <summary>
     /// Inserts the string representation of a specified 8-bit signed integer into this
@@ -354,28 +330,8 @@ public ref partial struct ValueStringBuilder
     /// </summary>
     /// <param name="index">The position in this instance where insertion begins.</param>
     /// <param name="value">The value to insert.</param>
-    /// <inheritdoc cref="ThrowHelper.ThrowArgumentOutOfRangeException_IfInvalidIndex(int, int)"/>
     [CLSCompliant(false)]
-    [SkipLocalsInit]
-    public void Insert(int index, sbyte value)
-    {
-        // JIT does not inline methods that use stackalloc yet, so
-        // we cannot move this logic to a shared location, sadly.
-        Span<char> chars = stackalloc char[StringHelper.MaxSbyteStringLength];
-        if (value.TryFormat(chars, out int charsWritten, format: default, provider: null))
-        {
-            Insert(index, chars.Slice(0, charsWritten));
-        }
-        else
-        {
-            // This path should never be taken. But if it is,
-            // it means that there's something wrong with the current culture.
-            // We still need to make it work, but we must not optimize this case,
-            // since it will actually degrade the overall performance and increase
-            // the assembly size for nothing.
-            InsertString(index, value.ToString());
-        }
-    }
+    public void Insert(int index, sbyte value) => Insert(index, value.ToString());
 
     /// <summary>
     /// Inserts the string representation of a specified 16-bit signed integer into this
@@ -383,27 +339,7 @@ public ref partial struct ValueStringBuilder
     /// </summary>
     /// <param name="index">The position in this instance where insertion begins.</param>
     /// <param name="value">The value to insert.</param>
-    /// <inheritdoc cref="ThrowHelper.ThrowArgumentOutOfRangeException_IfInvalidIndex(int, int)"/>
-    [SkipLocalsInit]
-    public void Insert(int index, short value)
-    {
-        // JIT does not inline methods that use stackalloc yet, so
-        // we cannot move this logic to a shared location, sadly.
-        Span<char> chars = stackalloc char[StringHelper.MaxInt16StringLength];
-        if (value.TryFormat(chars, out int charsWritten, format: default, provider: null))
-        {
-            Insert(index, chars.Slice(0, charsWritten));
-        }
-        else
-        {
-            // This path should never be taken. But if it is,
-            // it means that there's something wrong with the current culture.
-            // We still need to make it work, but we must not optimize this case,
-            // since it will actually degrade the overall performance and increase
-            // the assembly size for nothing.
-            InsertString(index, value.ToString());
-        }
-    }
+    public void Insert(int index, short value) => Insert(index, value.ToString());
 
     /// <summary>
     /// Inserts the string representation of a 16-bit unsigned integer into this instance
@@ -411,21 +347,8 @@ public ref partial struct ValueStringBuilder
     /// </summary>
     /// <param name="index">The position in this instance where insertion begins.</param>
     /// <param name="value">The value to insert.</param>
-    /// <inheritdoc cref="ThrowHelper.ThrowArgumentOutOfRangeException_IfInvalidIndex(int, int)"/>
     [CLSCompliant(false)]
-    [SkipLocalsInit]
-    public void Insert(int index, ushort value)
-    {
-        // JIT does not inline methods that use stackalloc yet, so
-        // we cannot move this logic to a shared location, sadly.
-        Span<char> chars = stackalloc char[StringHelper.MaxUInt16StringLength];
-
-        // Since the `ushort` data type is unsigned, its formatting is not influenced by the current culture.
-        // The current culture could provide a custom sign, which might be longer than one symbol,
-        // but in the case of `ushort`, this operation will always succeed.
-        value.TryFormat(chars, out int charsWritten, format: default, provider: null);
-        Insert(index, chars.Slice(0, charsWritten));
-    }
+    public void Insert(int index, ushort value) => Insert(index, value.ToString());
 
     /// <summary>
     /// Inserts the string representation of a specified 32-bit signed integer into this
@@ -433,28 +356,7 @@ public ref partial struct ValueStringBuilder
     /// </summary>
     /// <param name="index">The position in this instance where insertion begins.</param>
     /// <param name="value">The value to insert.</param>
-    /// <inheritdoc cref="ThrowHelper.ThrowArgumentOutOfRangeException_IfInvalidIndex(int, int)"/>
-    [SkipLocalsInit]
-    public void Insert(int index, int value)
-    {
-        // JIT does not inline methods that use stackalloc yet, so
-        // we cannot move this logic to a shared location, sadly.
-        Span<char> chars = stackalloc char[StringHelper.MaxInt32StringLength];
-
-        if (value.TryFormat(chars, out int charsWritten, format: default, provider: null))
-        {
-            Insert(index, chars.Slice(0, charsWritten));
-        }
-        else
-        {
-            // This path should never be taken. But if it is,
-            // it means that there's something wrong with the current culture.
-            // We still need to make it work, but we must not optimize this case,
-            // since it will actually degrade the overall performance and increase
-            // the assembly size for nothing.
-            InsertString(index, value.ToString());
-        }
-    }
+    public void Insert(int index, int value) => Insert(index, value.ToString());
 
     /// <summary>
     /// Inserts the string representation of a 32-bit unsigned integer into this instance
@@ -462,21 +364,8 @@ public ref partial struct ValueStringBuilder
     /// </summary>
     /// <param name="index">The position in this instance where insertion begins.</param>
     /// <param name="value">The value to insert.</param>
-    /// <inheritdoc cref="ThrowHelper.ThrowArgumentOutOfRangeException_IfInvalidIndex(int, int)"/>
     [CLSCompliant(false)]
-    [SkipLocalsInit]
-    public void Insert(int index, uint value)
-    {
-        // JIT does not inline methods that use stackalloc yet, so
-        // we cannot move this logic to a shared location, sadly.
-        Span<char> chars = stackalloc char[StringHelper.MaxUInt32StringLength];
-
-        // Since the `uint` data type is unsigned, its formatting is not influenced by the current culture.
-        // The current culture could provide a custom sign, which might be longer than one symbol,
-        // but in the case of `uint`, this operation will always succeed.
-        value.TryFormat(chars, out int charsWritten, format: default, provider: null);
-        Insert(index, chars.Slice(0, charsWritten));
-    }
+    public void Insert(int index, uint value) => Insert(index, value.ToString());
 
     /// <summary>
     /// Inserts the string representation of a 64-bit signed integer into this instance
@@ -484,28 +373,7 @@ public ref partial struct ValueStringBuilder
     /// </summary>
     /// <param name="index">The position in this instance where insertion begins.</param>
     /// <param name="value">The value to insert.</param>
-    /// <inheritdoc cref="ThrowHelper.ThrowArgumentOutOfRangeException_IfInvalidIndex(int, int)"/>
-    [SkipLocalsInit]
-    public void Insert(int index, long value)
-    {
-        // JIT does not inline methods that use stackalloc yet, so
-        // we cannot move this logic to a shared location, sadly.
-        Span<char> chars = stackalloc char[StringHelper.MaxInt64StringLength];
-
-        if (value.TryFormat(chars, out int charsWritten, format: default, provider: null))
-        {
-            Insert(index, chars.Slice(0, charsWritten));
-        }
-        else
-        {
-            // This path should never be taken. But if it is,
-            // it means that there's something wrong with the current culture.
-            // We still need to make it work, but we must not optimize this case,
-            // since it will actually degrade the overall performance and increase
-            // the assembly size for nothing.
-            InsertString(index, value.ToString());
-        }
-    }
+    public void Insert(int index, long value) => Insert(index, value.ToString());
 
     /// <summary>
     /// Inserts the string representation of a 64-bit unsigned integer into this instance
@@ -513,21 +381,8 @@ public ref partial struct ValueStringBuilder
     /// </summary>
     /// <param name="index">The position in this instance where insertion begins.</param>
     /// <param name="value">The value to insert.</param>
-    /// <inheritdoc cref="ThrowHelper.ThrowArgumentOutOfRangeException_IfInvalidIndex(int, int)"/>
     [CLSCompliant(false)]
-    [SkipLocalsInit]
-    public void Insert(int index, ulong value)
-    {
-        // JIT does not inline methods that use stackalloc yet, so
-        // we cannot move this logic to a shared location, sadly.
-        Span<char> chars = stackalloc char[StringHelper.MaxUInt64StringLength];
-
-        // Since the `ulong` data type is unsigned, its formatting is not influenced by the current culture.
-        // The current culture could provide a custom sign, which might be longer than one symbol,
-        // but in the case of `ulong`, this operation will always succeed.
-        value.TryFormat(chars, out int charsWritten, format: default, provider: null);
-        Insert(index, chars.Slice(0, charsWritten));
-    }
+    public void Insert(int index, ulong value) => Insert(index, value.ToString());
 
     /// <summary>
     /// Inserts the string representation of a single-precision floating point number
@@ -535,28 +390,7 @@ public ref partial struct ValueStringBuilder
     /// </summary>
     /// <param name="index">The position in this instance where insertion begins.</param>
     /// <param name="value">The value to insert.</param>
-    /// <inheritdoc cref="ThrowHelper.ThrowArgumentOutOfRangeException_IfInvalidIndex(int, int)"/>
-    [SkipLocalsInit]
-    public void Insert(int index, float value)
-    {
-        // JIT does not inline methods that use stackalloc yet, so
-        // we cannot move this logic to a shared location, sadly.
-        Span<char> chars = stackalloc char[StringHelper.MaxSingleStringLength];
-
-        if (value.TryFormat(chars, out int charsWritten, format: default, provider: null))
-        {
-            Insert(index, chars.Slice(0, charsWritten));
-        }
-        else
-        {
-            // This path should never be taken. But if it is,
-            // it means that there's something wrong with the current culture.
-            // We still need to make it work, but we must not optimize this case,
-            // since it will actually degrade the overall performance and increase
-            // the assembly size for nothing.
-            InsertString(index, value.ToString());
-        }
-    }
+    public void Insert(int index, float value) => Insert(index, value.ToString());
 
     /// <summary>
     /// Inserts the string representation of a double-precision floating-point number
@@ -564,28 +398,7 @@ public ref partial struct ValueStringBuilder
     /// </summary>
     /// <param name="index">The position in this instance where insertion begins.</param>
     /// <param name="value">The value to insert.</param>
-    /// <inheritdoc cref="ThrowHelper.ThrowArgumentOutOfRangeException_IfInvalidIndex(int, int)"/>
-    [SkipLocalsInit]
-    public void Insert(int index, double value)
-    {
-        // JIT does not inline methods that use stackalloc yet, so
-        // we cannot move this logic to a shared location, sadly.
-        Span<char> chars = stackalloc char[StringHelper.MaxDoubleStringLength];
-
-        if (value.TryFormat(chars, out int charsWritten, format: default, provider: null))
-        {
-            Insert(index, chars.Slice(0, charsWritten));
-        }
-        else
-        {
-            // This path should never be taken. But if it is,
-            // it means that there's something wrong with the current culture.
-            // We still need to make it work, but we must not optimize this case,
-            // since it will actually degrade the overall performance and increase
-            // the assembly size for nothing.
-            InsertString(index, value.ToString());
-        }
-    }
+    public void Insert(int index, double value) => Insert(index, value.ToString());
 
     /// <summary>
     /// Inserts the string representation of a decimal number into this instance at the
@@ -593,28 +406,7 @@ public ref partial struct ValueStringBuilder
     /// </summary>
     /// <param name="index">The position in this instance where insertion begins.</param>
     /// <param name="value">The value to insert.</param>
-    /// <inheritdoc cref="ThrowHelper.ThrowArgumentOutOfRangeException_IfInvalidIndex(int, int)"/>
-    [SkipLocalsInit]
-    public void Insert(int index, decimal value)
-    {
-        // JIT does not inline methods that use stackalloc yet, so
-        // we cannot move this logic to a shared location, sadly.
-        Span<char> chars = stackalloc char[StringHelper.MaxDecimalStringLength];
-
-        if (value.TryFormat(chars, out int charsWritten, format: default, provider: null))
-        {
-            Insert(index, chars.Slice(0, charsWritten));
-        }
-        else
-        {
-            // This path should never be taken. But if it is,
-            // it means that there's something wrong with the current culture.
-            // We still need to make it work, but we must not optimize this case,
-            // since it will actually degrade the overall performance and increase
-            // the assembly size for nothing.
-            InsertString(index, value.ToString());
-        }
-    }
+    public void Insert(int index, decimal value) => Insert(index, value.ToString());
 
     /// <summary>
     /// Inserts a formatted representation of the specified value into this instance
@@ -625,7 +417,6 @@ public ref partial struct ValueStringBuilder
     /// <param name="value">The value to insert.</param>
     /// <param name="format">The format string to be used.</param>
     /// <param name="provider">An object that supplies culture-specific formatting information.</param>
-    /// <inheritdoc cref="ThrowHelper.ThrowArgumentOutOfRangeException_IfInvalidIndex(int, int)"/>
     public void Insert<T>(int index, T? value, string? format = null, IFormatProvider? provider = null)
     {
         // If there's a custom formatter, let it deal with the formatting.

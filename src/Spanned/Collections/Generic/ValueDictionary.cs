@@ -101,7 +101,6 @@ public ref struct ValueDictionary<TKey, TValue> where TKey : notnull
     /// The <see cref="IEqualityComparer{T}"/> implementation to use when comparing keys in the dictionary, or
     /// <c>null</c> to use the default <see cref="EqualityComparer{T}"/> implementation for the dictionary type.
     /// </param>
-    /// <inheritdoc cref="ThrowHelper.ThrowArgumentOutOfRangeException_IfInvalidCapacity(int)"/>
     public ValueDictionary(int capacity, IEqualityComparer<TKey>? comparer)
         : this(comparer)
     {
@@ -146,7 +145,6 @@ public ref struct ValueDictionary<TKey, TValue> where TKey : notnull
     /// The <see cref="IEqualityComparer{T}"/> implementation to use when comparing keys in the dictionary, or
     /// <c>null</c> to use the default <see cref="EqualityComparer{T}"/> implementation for the dictionary type.
     /// </param>
-    /// <inheritdoc cref="ThrowHelper.ThrowArgumentOutOfRangeException_IfInvalidCapacity(int, int)"/>
     public ValueDictionary(scoped ReadOnlySpan<KeyValuePair<TKey, TValue>> collection, int capacity, IEqualityComparer<TKey>? comparer)
         : this(comparer)
     {
@@ -194,7 +192,7 @@ public ref struct ValueDictionary<TKey, TValue> where TKey : notnull
     /// <param name="dictionary">The dictionary to be converted.</param>
     /// <returns>A span covering the content of the <see cref="ValueDictionary{TKey, TValue}"/>.</returns>
     public static implicit operator ReadOnlySpan<KeyValuePair<TKey, TValue>>(ValueDictionary<TKey, TValue> dictionary)
-        => MemoryMarshal.CreateReadOnlySpan(ref MemoryMarshal.GetReference(dictionary._buffer), dictionary._count);
+        => dictionary._buffer.Slice(0, dictionary._count);
 
     /// <summary>
     /// Returns a span that represents the content of the <see cref="ValueDictionary{TKey, TValue}"/>.
@@ -204,7 +202,7 @@ public ref struct ValueDictionary<TKey, TValue> where TKey : notnull
     /// </remarks>
     /// <returns>A span covering the content of the <see cref="ValueDictionary{TKey, TValue}"/>.</returns>
     public readonly Span<KeyValuePair<TKey, TValue>> AsSpan()
-        => MemoryMarshal.CreateSpan(ref MemoryMarshal.GetReference(_buffer), _count);
+        => _buffer.Slice(0, _count);
 
     /// <summary>
     /// Returns a span that represents a segment of the dictionary starting from the specified index.
@@ -214,7 +212,6 @@ public ref struct ValueDictionary<TKey, TValue> where TKey : notnull
     /// </remarks>
     /// <param name="start">The start index of the segment.</param>
     /// <returns>A span covering the segment of the dictionary.</returns>
-    /// <inheritdoc cref="ThrowHelper.ThrowArgumentOutOfRangeException_IfInvalidRange(int, int)"/>
     public readonly Span<KeyValuePair<TKey, TValue>> AsSpan(int start) => AsSpan(start, _count - start);
 
     /// <summary>
@@ -226,13 +223,11 @@ public ref struct ValueDictionary<TKey, TValue> where TKey : notnull
     /// <param name="start">The start index of the segment.</param>
     /// <param name="length">The length of the segment.</param>
     /// <returns>A span covering the segment of the dictionary.</returns>
-    /// <inheritdoc cref="ThrowHelper.ThrowArgumentOutOfRangeException_IfInvalidRange(int, int, int)"/>
     public readonly Span<KeyValuePair<TKey, TValue>> AsSpan(int start, int length)
     {
         ThrowHelper.ThrowArgumentOutOfRangeException_IfInvalidRange(start, length, _count);
 
-        // Skip additional bound checks.
-        return MemoryMarshal.CreateSpan(ref Unsafe.Add(ref MemoryMarshal.GetReference(_buffer), start), length);
+        return _buffer.Slice(start, length);
     }
 
     /// <summary>
@@ -257,7 +252,6 @@ public ref struct ValueDictionary<TKey, TValue> where TKey : notnull
     /// <summary>
     /// The number of key/value pairs contained in the <see cref="ValueDictionary{TKey, TValue}"/>.
     /// </summary>
-    /// <inheritdoc cref="ThrowHelper.ThrowArgumentOutOfRangeException_IfInvalidCount(int, int)"/>
     public int Count
     {
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
@@ -274,7 +268,6 @@ public ref struct ValueDictionary<TKey, TValue> where TKey : notnull
     /// The total number of key/value pairs the internal data structure can hold
     /// without resizing.
     /// </summary>
-    /// <inheritdoc cref="ThrowHelper.ThrowArgumentOutOfRangeException_IfInvalidCapacity(int, int)"/>
     public int Capacity
     {
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
@@ -358,7 +351,6 @@ public ref struct ValueDictionary<TKey, TValue> where TKey : notnull
     /// </summary>
     /// <param name="capacity">The number of entries.</param>
     /// <returns>The current capacity of the <see cref="ValueDictionary{TKey, TValue}"/>.</returns>
-    /// <inheritdoc cref="ThrowHelper.ThrowArgumentOutOfRangeException_IfInvalidCapacity(int)"/>
     public int EnsureCapacity(int capacity)
     {
         ThrowHelper.ThrowArgumentOutOfRangeException_IfInvalidCapacity(capacity);
@@ -507,11 +499,8 @@ public ref struct ValueDictionary<TKey, TValue> where TKey : notnull
         if (index < 0)
             return false;
 
-        if (RuntimeHelpers.IsReferenceOrContainsReferences<KeyValuePair<TKey, TValue>>())
-        {
-            // Clear the element so that the GC can reclaim its reference.
-            _buffer[index] = default!;
-        }
+        // Clear the element so that the GC can reclaim its reference.
+        _buffer[index] = default!;
 
         _buffer.Slice(index + 1).CopyTo(_buffer.Slice(index));
         _count--;
@@ -523,18 +512,14 @@ public ref struct ValueDictionary<TKey, TValue> where TKey : notnull
     /// Removes the entry at the specified index of the <see cref="ValueDictionary{TKey, TValue}"/>.
     /// </summary>
     /// <param name="index">The zero-based index of the entry to remove.</param>
-    /// <inheritdoc cref="ThrowHelper.ThrowArgumentOutOfRangeException_IfInvalidIndex(int, int)"/>
     [EditorBrowsable(EditorBrowsableState.Never)]
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
     public void RemoveAt(int index)
     {
         ThrowHelper.ThrowArgumentOutOfRangeException_IfInvalidIndex(index, _count);
 
-        if (RuntimeHelpers.IsReferenceOrContainsReferences<KeyValuePair<TKey, TValue>>())
-        {
-            // Clear the element so that the GC can reclaim its reference.
-            _buffer[index] = default!;
-        }
+        // Clear the element so that the GC can reclaim its reference.
+        _buffer[index] = default!;
 
         _buffer.Slice(index + 1).CopyTo(_buffer.Slice(index));
         _count--;
@@ -545,17 +530,13 @@ public ref struct ValueDictionary<TKey, TValue> where TKey : notnull
     /// </summary>
     /// <param name="start">The zero-based starting index of the range of entries to remove.</param>
     /// <param name="length">The number of entries to remove.</param>
-    /// <inheritdoc cref="ThrowHelper.ThrowArgumentOutOfRangeException_IfInvalidRange(int, int, int)"/>
     [EditorBrowsable(EditorBrowsableState.Never)]
     public void RemoveRange(int start, int length)
     {
         ThrowHelper.ThrowArgumentOutOfRangeException_IfInvalidRange(start, length, _count);
 
-        if (RuntimeHelpers.IsReferenceOrContainsReferences<KeyValuePair<TKey, TValue>>())
-        {
-            // Clear the elements so that the GC can reclaim the references.
-            AsSpan(start, length).Clear();
-        }
+        // Clear the elements so that the GC can reclaim the references.
+        AsSpan(start, length).Clear();
 
         _buffer.Slice(start + length).CopyTo(_buffer.Slice(start));
         _count -= length;
@@ -591,11 +572,8 @@ public ref struct ValueDictionary<TKey, TValue> where TKey : notnull
     /// </summary>
     public void Clear()
     {
-        if (RuntimeHelpers.IsReferenceOrContainsReferences<KeyValuePair<TKey, TValue>>())
-        {
-            // Clear the elements so that the GC can reclaim the references.
-            AsSpan().Clear();
-        }
+        // Clear the elements so that the GC can reclaim the references.
+        AsSpan().Clear();
 
         _count = 0;
     }
@@ -643,7 +621,7 @@ public ref struct ValueDictionary<TKey, TValue> where TKey : notnull
             for (int i = 0; i < entries.Length; i++)
             {
                 KeyValuePair<TKey, TValue> pair = entries[i];
-                if (comparer.Equals(key, pair.Key))
+                if (comparer!.Equals(key, pair.Key))
                 {
                     value = pair.Value;
                     return i;
@@ -694,7 +672,6 @@ public ref struct ValueDictionary<TKey, TValue> where TKey : notnull
     /// <returns>
     /// A shallow copy of a range of elements in the source <see cref="ValueDictionary{TKey, TValue}"/>.
     /// </returns>
-    /// <inheritdoc cref="ThrowHelper.ThrowArgumentOutOfRangeException_IfInvalidRange(int, int, int)"/>
     [EditorBrowsable(EditorBrowsableState.Never)]
     public readonly ValueDictionary<TKey, TValue> Slice(int start, int length)
     {
@@ -729,7 +706,6 @@ public ref struct ValueDictionary<TKey, TValue> where TKey : notnull
     /// The destination of the elements copied from <see cref="ValueDictionary{TKey, TValue}"/>.
     /// </param>
     /// <param name="destinationStart">The zero-based index in the destination at which copying begins.</param>
-    /// <inheritdoc cref="ThrowHelper.ThrowArgumentOutOfRangeException_IfInvalidIndex(int, int)"/>
     public readonly void CopyTo(KeyValuePair<TKey, TValue>[] destination, int destinationStart) => CopyTo(0, destination, destinationStart, _count);
 
     /// <inheritdoc cref="CopyTo(Span{KeyValuePair{TKey, TValue}})"/>
@@ -742,7 +718,6 @@ public ref struct ValueDictionary<TKey, TValue> where TKey : notnull
     /// <param name="length">
     /// The number of elements to copy.
     /// </param>
-    /// <inheritdoc cref="ThrowHelper.ThrowArgumentOutOfRangeException_IfInvalidRange(int, int, int)"/>
     public readonly void CopyTo(int start, scoped Span<KeyValuePair<TKey, TValue>> destination, int length)
         => AsSpan(start, length).CopyTo(destination);
 
@@ -755,7 +730,6 @@ public ref struct ValueDictionary<TKey, TValue> where TKey : notnull
     /// </param>
     /// <param name="destinationStart">The zero-based index in the destination at which copying begins.</param>
     /// <param name="length">The number of elements to copy.</param>
-    /// <inheritdoc cref="ThrowHelper.ThrowArgumentOutOfRangeException_IfInvalidRange(int, int, int)"/>
     public readonly void CopyTo(int start, KeyValuePair<TKey, TValue>[] destination, int destinationStart, int length)
     {
         ThrowHelper.ThrowArgumentNullException_IfNull(destination);
@@ -798,7 +772,6 @@ public ref struct ValueDictionary<TKey, TValue> where TKey : notnull
     /// <param name="destination">The destination of the elements copied from <see cref="ValueDictionary{TKey, TValue}"/>.</param>
     /// <param name="destinationStart">The zero-based index in the destination at which copying begins.</param>
     /// <param name="written">The number of elements copied to the destination.</param>
-    /// <inheritdoc cref="ThrowHelper.ThrowArgumentOutOfRangeException_IfInvalidIndex(int, int)"/>
     public readonly bool TryCopyTo(KeyValuePair<TKey, TValue>[] destination, int destinationStart, out int written)
         => TryCopyTo(0, destination, destinationStart, _count, out written);
 
@@ -809,7 +782,6 @@ public ref struct ValueDictionary<TKey, TValue> where TKey : notnull
     /// <param name="destination">The destination of the elements copied from <see cref="ValueDictionary{TKey, TValue}"/>.</param>
     /// <param name="length">The number of elements to copy.</param>
     /// <param name="written">The number of elements copied to the destination.</param>
-    /// <inheritdoc cref="ThrowHelper.ThrowArgumentOutOfRangeException_IfInvalidRange(int, int, int)"/>
     public readonly bool TryCopyTo(int start, scoped Span<KeyValuePair<TKey, TValue>> destination, int length, out int written)
     {
         if (AsSpan(start, length).TryCopyTo(destination))
@@ -834,7 +806,6 @@ public ref struct ValueDictionary<TKey, TValue> where TKey : notnull
     /// <param name="destinationStart">The zero-based index in the destination at which copying begins.</param>
     /// <param name="length">The number of elements to copy.</param>
     /// <param name="written">The number of elements copied to the array.</param>
-    /// <inheritdoc cref="ThrowHelper.ThrowArgumentOutOfRangeException_IfInvalidRange(int, int, int)"/>
     public readonly bool TryCopyTo(int start, KeyValuePair<TKey, TValue>[] destination, int destinationStart, int length, out int written)
     {
         ThrowHelper.ThrowArgumentNullException_IfNull(destination);
@@ -923,13 +894,13 @@ public ref struct ValueDictionary<TKey, TValue> where TKey : notnull
     public readonly Span<KeyValuePair<TKey, TValue>>.Enumerator GetEnumerator()
         => AsSpan().GetEnumerator();
 
-    /// <inheritdoc cref="ThrowHelper.ThrowNotSupportedException_CannotCallEqualsOnRefStruct"/>
+    /// <inheritdoc/>
     [Obsolete("Equals(object) on ValueDictionary will always throw an exception.")]
     [EditorBrowsable(EditorBrowsableState.Never)]
     public override readonly bool Equals(object? obj)
         => ThrowHelper.ThrowNotSupportedException_CannotCallEqualsOnRefStruct();
 
-    /// <inheritdoc cref="ThrowHelper.ThrowNotSupportedException_CannotCallGetHashCodeOnRefStruct"/>
+    /// <inheritdoc/>
     [Obsolete("GetHashCode() on ValueDictionary will always throw an exception.")]
     [EditorBrowsable(EditorBrowsableState.Never)]
     public override readonly int GetHashCode()
@@ -941,11 +912,8 @@ public ref struct ValueDictionary<TKey, TValue> where TKey : notnull
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
     public void Dispose()
     {
-        if (RuntimeHelpers.IsReferenceOrContainsReferences<KeyValuePair<TKey, TValue>>())
-        {
-            // Clear the elements so that the GC can reclaim the references.
-            AsSpan().Clear();
-        }
+        // Clear the elements so that the GC can reclaim the references.
+        AsSpan().Clear();
 
         KeyValuePair<TKey, TValue>[]? oldRentedBuffer = _rentedBuffer;
 
@@ -976,7 +944,6 @@ public ref struct ValueDictionary<TKey, TValue> where TKey : notnull
     /// without any further expansion of its backing storage.
     /// </summary>
     /// <param name="capacity">The new capacity.</param>
-    /// <inheritdoc cref="ThrowHelper.ThrowArgumentOutOfRangeException_IfInvalidCapacity(int, int)"/>
     public void TrimExcess(int capacity)
     {
         if (capacity < _buffer.Length)
@@ -1014,11 +981,8 @@ public ref struct ValueDictionary<TKey, TValue> where TKey : notnull
         KeyValuePair<TKey, TValue>[]? oldRentedBuffer = _rentedBuffer;
         AsSpan().CopyTo(newRentedBuffer);
 
-        if (RuntimeHelpers.IsReferenceOrContainsReferences<KeyValuePair<TKey, TValue>>())
-        {
-            // Clear the elements so that the GC can reclaim the references.
-            AsSpan().Clear();
-        }
+        // Clear the elements so that the GC can reclaim the references.
+        AsSpan().Clear();
 
         _buffer = _rentedBuffer = newRentedBuffer;
         if (oldRentedBuffer is not null)
@@ -1082,7 +1046,6 @@ public ref struct ValueDictionary<TKey, TValue> where TKey : notnull
         /// The destination of the elements copied from the <see cref="KeyCollection"/>.
         /// </param>
         /// <param name="index">The zero-based index in array at which copying begins.</param>
-        /// <inheritdoc cref="ThrowHelper.ThrowArgumentOutOfRangeException_IfInvalidIndex(int, int)"/>
         /// <exception cref="ArgumentNullException"><paramref name="array"/> is <c>null</c>.</exception>
         /// <exception cref="ArgumentException">
         /// The number of elements in the source <see cref="KeyCollection"/> is greater
@@ -1115,13 +1078,13 @@ public ref struct ValueDictionary<TKey, TValue> where TKey : notnull
                 destination[i] = entries[i].Key;
         }
 
-        /// <inheritdoc cref="ThrowHelper.ThrowNotSupportedException_CannotCallEqualsOnRefStruct"/>
+        /// <inheritdoc/>
         [Obsolete("Equals(object) on KeyCollection will always throw an exception.")]
         [EditorBrowsable(EditorBrowsableState.Never)]
         public override readonly bool Equals(object? obj)
             => ThrowHelper.ThrowNotSupportedException_CannotCallEqualsOnRefStruct();
 
-        /// <inheritdoc cref="ThrowHelper.ThrowNotSupportedException_CannotCallGetHashCodeOnRefStruct"/>
+        /// <inheritdoc/>
         [Obsolete("GetHashCode() on KeyCollection will always throw an exception.")]
         [EditorBrowsable(EditorBrowsableState.Never)]
         public override readonly int GetHashCode()
@@ -1247,7 +1210,6 @@ public ref struct ValueDictionary<TKey, TValue> where TKey : notnull
         /// The destination of the elements copied from the <see cref="ValueCollection"/>.
         /// </param>
         /// <param name="index">The zero-based index in array at which copying begins.</param>
-        /// <inheritdoc cref="ThrowHelper.ThrowArgumentOutOfRangeException_IfInvalidIndex(int, int)"/>
         /// <exception cref="ArgumentNullException"><paramref name="array"/> is <c>null</c>.</exception>
         /// <exception cref="ArgumentException">
         /// The number of elements in the source <see cref="ValueCollection"/> is greater
@@ -1280,13 +1242,13 @@ public ref struct ValueDictionary<TKey, TValue> where TKey : notnull
                 destination[i] = entries[i].Value;
         }
 
-        /// <inheritdoc cref="ThrowHelper.ThrowNotSupportedException_CannotCallEqualsOnRefStruct"/>
+        /// <inheritdoc/>
         [Obsolete("Equals(object) on ValueCollection will always throw an exception.")]
         [EditorBrowsable(EditorBrowsableState.Never)]
         public override readonly bool Equals(object? obj)
             => ThrowHelper.ThrowNotSupportedException_CannotCallEqualsOnRefStruct();
 
-        /// <inheritdoc cref="ThrowHelper.ThrowNotSupportedException_CannotCallGetHashCodeOnRefStruct"/>
+        /// <inheritdoc/>
         [Obsolete("GetHashCode() on ValueCollection will always throw an exception.")]
         [EditorBrowsable(EditorBrowsableState.Never)]
         public override readonly int GetHashCode()

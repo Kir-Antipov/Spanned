@@ -1,72 +1,7 @@
-using Spanned.Collections.Generic;
-
 namespace Spanned.Text;
 
 public ref partial struct ValueStringBuilder
 {
-    /// <summary>
-    /// Appends the string returned by processing a composite format string, which contains
-    /// zero or more format items, to this instance. Each format item is replaced by
-    /// the string representation of the provided argument.
-    /// </summary>
-    /// <param name="format">A composite format string.</param>
-    /// <param name="arg0">The object to format.</param>
-    /// <exception cref="ArgumentNullException"><paramref name="format"/> is null.</exception>
-    /// <exception cref="FormatException">
-    /// <paramref name="format"/> is invalid.
-    /// -or-
-    /// The index of a format item is less than 0 (zero), or
-    /// greater than or equal to 1 (three).
-    /// </exception>
-    public void AppendFormat([StringSyntax(StringSyntaxAttribute.CompositeFormat)] string format, object? arg0)
-    {
-        InlineArray1<object?> args = new(arg0);
-        AppendFormatCore(provider: null, format, args);
-    }
-
-    /// <summary>
-    /// Appends the string returned by processing a composite format string, which contains
-    /// zero or more format items, to this instance. Each format item is replaced by
-    /// the string representation of either of two arguments.
-    /// </summary>
-    /// <param name="format">A composite format string.</param>
-    /// <param name="arg0">The first object to format.</param>
-    /// <param name="arg1">The second object to format.</param>
-    /// <exception cref="ArgumentNullException"><paramref name="format"/> is null.</exception>
-    /// <exception cref="FormatException">
-    /// <paramref name="format"/> is invalid.
-    /// -or-
-    /// The index of a format item is less than 0 (zero), or
-    /// greater than or equal to 2 (three).
-    /// </exception>
-    public void AppendFormat([StringSyntax(StringSyntaxAttribute.CompositeFormat)] string format, object? arg0, object? arg1)
-    {
-        InlineArray2<object?> args = new(arg0, arg1);
-        AppendFormatCore(provider: null, format, args);
-    }
-
-    /// <summary>
-    /// Appends the string returned by processing a composite format string, which contains
-    /// zero or more format items, to this instance. Each format item is replaced by
-    /// the string representation of either of three arguments.
-    /// </summary>
-    /// <param name="format">A composite format string.</param>
-    /// <param name="arg0">The first object to format.</param>
-    /// <param name="arg1">The second object to format.</param>
-    /// <param name="arg2">The third object to format.</param>
-    /// <exception cref="ArgumentNullException"><paramref name="format"/> is null.</exception>
-    /// <exception cref="FormatException">
-    /// <paramref name="format"/> is invalid.
-    /// -or-
-    /// The index of a format item is less than 0 (zero), or
-    /// greater than or equal to 3 (three).
-    /// </exception>
-    public void AppendFormat([StringSyntax(StringSyntaxAttribute.CompositeFormat)] string format, object? arg0, object? arg1, object? arg2)
-    {
-        InlineArray3<object?> args = new(arg0, arg1, arg2);
-        AppendFormatCore(provider: null, format, args);
-    }
-
     /// <summary>
     /// Appends the string returned by processing a composite format string, which contains
     /// zero or more format items, to this instance. Each format item is replaced by
@@ -104,75 +39,6 @@ public ref partial struct ValueStringBuilder
     /// </exception>
     public void AppendFormat([StringSyntax(StringSyntaxAttribute.CompositeFormat)] string format, scoped ReadOnlySpan<object?> args)
         => AppendFormatCore(provider: null, format, args);
-
-    /// <summary>
-    /// Appends the string returned by processing a composite format string, which contains
-    /// zero or more format items, to this instance. Each format item is replaced by
-    /// the string representation of the given arguments using a specified format
-    /// provider.
-    /// </summary>
-    /// <param name="provider">An object that supplies culture-specific formatting information.</param>
-    /// <param name="format">A composite format string.</param>
-    /// <param name="arg0">The object to format.</param>
-    /// <exception cref="ArgumentNullException"><paramref name="format"/> is null.</exception>
-    /// <exception cref="FormatException">
-    /// <paramref name="format"/> is invalid.
-    /// -or-
-    /// The index of a format item is less than 0 (zero), or
-    /// greater than or equal to 1 (three).
-    /// </exception>
-    public void AppendFormat(IFormatProvider? provider, [StringSyntax(StringSyntaxAttribute.CompositeFormat)] string format, object? arg0)
-    {
-        InlineArray1<object?> args = new(arg0);
-        AppendFormatCore(provider, format, args);
-    }
-
-    /// <summary>
-    /// Appends the string returned by processing a composite format string, which contains
-    /// zero or more format items, to this instance. Each format item is replaced by
-    /// the string representation of either of two arguments using a specified format
-    /// provider.
-    /// </summary>
-    /// <param name="provider">An object that supplies culture-specific formatting information.</param>
-    /// <param name="format">A composite format string.</param>
-    /// <param name="arg0">The first object to format.</param>
-    /// <param name="arg1">The second object to format.</param>
-    /// <exception cref="ArgumentNullException"><paramref name="format"/> is null.</exception>
-    /// <exception cref="FormatException">
-    /// <paramref name="format"/> is invalid.
-    /// -or-
-    /// The index of a format item is less than 0 (zero), or
-    /// greater than or equal to 2 (three).
-    /// </exception>
-    public void AppendFormat(IFormatProvider? provider, [StringSyntax(StringSyntaxAttribute.CompositeFormat)] string format, object? arg0, object? arg1)
-    {
-        InlineArray2<object?> args = new(arg0, arg1);
-        AppendFormatCore(provider, format, args);
-    }
-
-    /// <summary>
-    /// Appends the string returned by processing a composite format string, which contains
-    /// zero or more format items, to this instance. Each format item is replaced by
-    /// the string representation of either of three arguments using a specified format
-    /// provider.
-    /// </summary>
-    /// <param name="provider">An object that supplies culture-specific formatting information.</param>
-    /// <param name="format">A composite format string.</param>
-    /// <param name="arg0">The first object to format.</param>
-    /// <param name="arg1">The second object to format.</param>
-    /// <param name="arg2">The third object to format.</param>
-    /// <exception cref="ArgumentNullException"><paramref name="format"/> is null.</exception>
-    /// <exception cref="FormatException">
-    /// <paramref name="format"/> is invalid.
-    /// -or-
-    /// The index of a format item is less than 0 (zero), or
-    /// greater than or equal to 3 (three).
-    /// </exception>
-    public void AppendFormat(IFormatProvider? provider, [StringSyntax(StringSyntaxAttribute.CompositeFormat)] string format, object? arg0, object? arg1, object? arg2)
-    {
-        InlineArray3<object?> args = new(arg0, arg1, arg2);
-        AppendFormatCore(provider, format, args);
-    }
 
     /// <summary>
     /// Appends the string returned by processing a composite format string, which contains
@@ -410,7 +276,7 @@ public ref partial struct ValueStringBuilder
             {
                 if (!itemFormatSpan.IsEmpty)
                 {
-                    itemFormat = new string(itemFormatSpan);
+                    itemFormat = itemFormatSpan.ToString();
                 }
 
                 s = cf.Format(itemFormat, arg, provider);
@@ -424,7 +290,7 @@ public ref partial struct ValueStringBuilder
                 {
                     if (itemFormatSpan.Length != 0)
                     {
-                        itemFormat ??= new string(itemFormatSpan);
+                        itemFormat ??= itemFormatSpan.ToString();
                     }
                     s = formattableArg.ToString(itemFormat, provider);
                 }
