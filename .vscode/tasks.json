@@ -30,45 +30,7 @@
       ],
       "problemMatcher": "$msCompile",
     },
-    {
-      "label": "run:tests",
-      "isTestCommand": true,
-      "command": "dotnet",
-      "type": "process",
-      "args": [
-        "test",
-        "-tl",
-        "-c",
-        "Release",
-      ],
-      "problemMatcher": "$msCompile",
-      "options": {
-        "cwd": "${workspaceFolder}",
-      },
-    },
-    {
-      "label": "run:benchmarks",
-      "command": "dotnet",
-      "type": "process",
-      "args": [
-        "run",
-        "--project",
-        "${workspaceFolder}/tests/Spanned.Benchmarks/Spanned.Benchmarks.csproj",
-        "-tl",
-        "-c",
-        "Release",
-        "--filter",
-        "${input:benchmarkFilter}",
-      ],
-      "problemMatcher": "$msCompile",
-    },
   ],
   "inputs": [
-    {
-      "id": "benchmarkFilter",
-      "description": "BenchmarkDotNet Filter",
-      "default": "*",
-      "type": "promptString",
-    },
   ],
 }
