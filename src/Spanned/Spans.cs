@@ -28,12 +28,6 @@ public static partial class Spans
                 return true;
             }
 
-            if (enumerable.GetType() == typeof(List<T>))
-            {
-                span = AsSpan((List<T>)enumerable);
-                return true;
-            }
-
             if (typeof(T) == typeof(char) && enumerable is string str)
             {
                 span = UnsafeCast<char, T>(str);
@@ -43,50 +37,6 @@ public static partial class Spans
 
         span = default;
         return false;
-    }
-
-    /// <summary>
-    /// Converts a <see cref="List{T}"/> to a <see cref="Span{T}"/>.
-    /// </summary>
-    /// <typeparam name="T">The type of the elements in the list.</typeparam>
-    /// <param name="list">The list to convert to a span.</param>
-    /// <returns>A <see cref="Span{T}"/> representing the elements in the list.</returns>
-    public static Span<T> AsSpan<T>(this List<T>? list)
-        => CollectionsMarshal.AsSpan(list);
-
-    /// <summary>
-    /// Retrieves a <see cref="Span{T}"/> representing the remaining capacity of a <see cref="List{T}"/>.
-    /// </summary>
-    /// <typeparam name="T">The type of the elements in the list.</typeparam>
-    /// <param name="list">The list to obtain the capacity span from.</param>
-    /// <returns>A <see cref="Span{T}"/> representing the remaining capacity of the list.</returns>
-    public static Span<T> AsRemainingSpan<T>(this List<T>? list)
-    {
-        if (list is not null)
-        {
-            ref T firstElement = ref MemoryMarshal.GetReference(CollectionsMarshal.AsSpan(list));
-            ref T afterLastElement = ref Unsafe.Add(ref firstElement, list.Count);
-            return MemoryMarshal.CreateSpan(ref afterLastElement, list.Capacity - list.Count);
-        }
-
-        return default;
-    }
-
-    /// <summary>
-    /// Retrieves a <see cref="Span{T}"/> representing the entire capacity of a <see cref="List{T}"/>.
-    /// </summary>
-    /// <typeparam name="T">The type of the elements in the list.</typeparam>
-    /// <param name="list">The list to obtain the capacity span from.</param>
-    /// <returns>A <see cref="Span{T}"/> representing the entire capacity of the list.</returns>
-    public static Span<T> AsCapacitySpan<T>(this List<T>? list)
-    {
-        if (list is not null)
-        {
-            ref T firstElement = ref MemoryMarshal.GetReference(CollectionsMarshal.AsSpan(list));
-            return MemoryMarshal.CreateSpan(ref firstElement, list.Capacity);
-        }
-
-        return default;
     }
 
     /// <summary>
@@ -108,8 +58,8 @@ public static partial class Spans
     {
         List<T> list = new(span.Length);
 
-        CollectionsMarshal.SetCount(list, span.Length);
-        span.CopyTo(CollectionsMarshal.AsSpan(list));
+        for (int i = 0; i < span.Length; i++)
+            list.Add(span[i]);
 
         return list;
     }

@@ -206,56 +206,6 @@ public static partial class Spans
     }
 
     /// <summary>
-    /// Computes the average of a span of <see cref="nint"/> values.
-    /// </summary>
-    /// <param name="span">A span of <see cref="nint"/> values to calculate the average of.</param>
-    /// <inheritdoc cref="Average(Span{long})"/>
-    public static double Average(this scoped Span<nint> span)
-    {
-        if (!span.IsEmpty)
-            return span.LongSum() / (double)span.Length;
-
-        ThrowHelper.ThrowInvalidOperationException_NoElements();
-        return 0;
-    }
-
-    /// <inheritdoc cref="Average(Span{nint})"/>
-    public static double Average(this scoped ReadOnlySpan<nint> span)
-    {
-        if (!span.IsEmpty)
-            return span.LongSum() / (double)span.Length;
-
-        ThrowHelper.ThrowInvalidOperationException_NoElements();
-        return 0;
-    }
-
-    /// <summary>
-    /// Computes the average of a span of <see cref="nuint"/> values.
-    /// </summary>
-    /// <param name="span">A span of <see cref="nuint"/> values to calculate the average of.</param>
-    /// <inheritdoc cref="Average(Span{long})"/>
-    [CLSCompliant(false)]
-    public static double Average(this scoped Span<nuint> span)
-    {
-        if (!span.IsEmpty)
-            return span.LongSum() / (double)span.Length;
-
-        ThrowHelper.ThrowInvalidOperationException_NoElements();
-        return 0;
-    }
-
-    /// <inheritdoc cref="Average(Span{nuint})"/>
-    [CLSCompliant(false)]
-    public static double Average(this scoped ReadOnlySpan<nuint> span)
-    {
-        if (!span.IsEmpty)
-            return span.LongSum() / (double)span.Length;
-
-        ThrowHelper.ThrowInvalidOperationException_NoElements();
-        return 0;
-    }
-
-    /// <summary>
     /// Computes the average of a span of <see cref="float"/> values.
     /// </summary>
     /// <param name="span">A span of <see cref="float"/> values to calculate the average of.</param>
@@ -325,47 +275,6 @@ public static partial class Spans
 
         ThrowHelper.ThrowInvalidOperationException_NoElements();
         return 0;
-    }
-
-    /// <inheritdoc cref="Average{TSource, TAccumulator, TResult}(Span{TSource})"/>
-    public static TResult Average<TSource, TResult>(this scoped Span<TSource> span) where TSource : INumberBase<TSource> where TResult : INumberBase<TResult> => Average<TSource, TResult, TResult>(span);
-
-    /// <inheritdoc cref="Average{TSource, TResult}(Span{TSource})"/>
-    public static TResult Average<TSource, TResult>(this scoped ReadOnlySpan<TSource> span) where TSource : INumberBase<TSource> where TResult : INumberBase<TResult> => Average<TSource, TResult, TResult>(span);
-
-    /// <summary>
-    /// Computes the average of a span of generic values.
-    /// </summary>
-    /// <typeparam name="TSource">The type of elements in the source span.</typeparam>
-    /// <typeparam name="TAccumulator">The type used for intermediate accumulation.</typeparam>
-    /// <typeparam name="TResult">The type of the result.</typeparam>
-    /// <param name="span">A span of generic values to calculate the average of.</param>
-    /// <returns>The average of the span of values.</returns>
-    /// <exception cref="InvalidOperationException"><paramref name="span"/> contains no elements.</exception>
-    /// <exception cref="OverflowException">The addition operation in a checked context resulted in an overflow.</exception>
-    public static TResult Average<TSource, TAccumulator, TResult>(this scoped Span<TSource> span)
-        where TSource : INumberBase<TSource>
-        where TAccumulator : INumberBase<TAccumulator>
-        where TResult : INumberBase<TResult>
-    {
-        if (!span.IsEmpty)
-            return TResult.CreateChecked(span.LongSum<TSource, TAccumulator>()) / TResult.CreateChecked(span.Length);
-
-        ThrowHelper.ThrowInvalidOperationException_NoElements();
-        return TResult.Zero;
-    }
-
-    /// <inheritdoc cref="Average{TSource, TAccumulator, TResult}(Span{TSource})"/>
-    public static TResult Average<TSource, TAccumulator, TResult>(this scoped ReadOnlySpan<TSource> span)
-        where TSource : INumberBase<TSource>
-        where TAccumulator : INumberBase<TAccumulator>
-        where TResult : INumberBase<TResult>
-    {
-        if (!span.IsEmpty)
-            return TResult.CreateChecked(span.LongSum<TSource, TAccumulator>()) / TResult.CreateChecked(span.Length);
-
-        ThrowHelper.ThrowInvalidOperationException_NoElements();
-        return TResult.Zero;
     }
 
     /// <summary>
@@ -571,90 +480,5 @@ public static partial class Spans
 
         ThrowHelper.ThrowInvalidOperationException_NoElements();
         return 0;
-    }
-
-    /// <summary>
-    /// Computes the average of a span of <see cref="nint"/> values.
-    /// </summary>
-    /// <param name="span">A span of <see cref="nint"/> values to calculate the average of.</param>
-    /// <inheritdoc cref="UnsafeAverage(Span{byte})"/>
-    public static double UnsafeAverage(this scoped Span<nint> span)
-    {
-        if (!span.IsEmpty)
-            return span.UnsafeSum() / (double)span.Length;
-
-        ThrowHelper.ThrowInvalidOperationException_NoElements();
-        return 0;
-    }
-
-    /// <inheritdoc cref="UnsafeAverage(Span{nint})"/>
-    public static double UnsafeAverage(this scoped ReadOnlySpan<nint> span)
-    {
-        if (!span.IsEmpty)
-            return span.UnsafeSum() / (double)span.Length;
-
-        ThrowHelper.ThrowInvalidOperationException_NoElements();
-        return 0;
-    }
-
-    /// <summary>
-    /// Computes the average of a span of <see cref="nuint"/> values.
-    /// </summary>
-    /// <param name="span">A span of <see cref="nuint"/> values to calculate the average of.</param>
-    /// <inheritdoc cref="UnsafeAverage(Span{byte})"/>
-    [CLSCompliant(false)]
-    public static double UnsafeAverage(this scoped Span<nuint> span)
-    {
-        if (!span.IsEmpty)
-            return span.UnsafeSum() / (double)span.Length;
-
-        ThrowHelper.ThrowInvalidOperationException_NoElements();
-        return 0;
-    }
-
-    /// <inheritdoc cref="UnsafeAverage(Span{nuint})"/>
-    [CLSCompliant(false)]
-    public static double UnsafeAverage(this scoped ReadOnlySpan<nuint> span)
-    {
-        if (!span.IsEmpty)
-            return span.UnsafeSum() / (double)span.Length;
-
-        ThrowHelper.ThrowInvalidOperationException_NoElements();
-        return 0;
-    }
-
-    /// <summary>
-    /// Computes the average of a span of generic values.
-    /// </summary>
-    /// <remarks>
-    /// This method does not account for overflow.
-    /// Use with caution and ensure that values in the span cannot cause an overflow if it is not desirable.
-    /// </remarks>
-    /// <typeparam name="TSource">The type of elements in the source span.</typeparam>
-    /// <typeparam name="TResult">The type of the result.</typeparam>
-    /// <param name="span">A span of generic values to calculate the average of.</param>
-    /// <returns>The average of the span of values.</returns>
-    /// <exception cref="InvalidOperationException"><paramref name="span"/> contains no elements.</exception>
-    public static TResult UnsafeAverage<TSource, TResult>(this scoped Span<TSource> span)
-        where TSource : INumberBase<TSource>
-        where TResult : INumberBase<TResult>
-    {
-        if (!span.IsEmpty)
-            return TResult.CreateChecked(span.UnsafeSum()) / TResult.CreateChecked(span.Length);
-
-        ThrowHelper.ThrowInvalidOperationException_NoElements();
-        return default;
-    }
-
-    /// <inheritdoc cref="UnsafeAverage{TSource, TResult}(Span{TSource})"/>
-    public static TResult UnsafeAverage<TSource, TResult>(this scoped ReadOnlySpan<TSource> span)
-        where TSource : INumberBase<TSource>
-        where TResult : INumberBase<TResult>
-    {
-        if (!span.IsEmpty)
-            return TResult.CreateChecked(span.UnsafeSum()) / TResult.CreateChecked(span.Length);
-
-        ThrowHelper.ThrowInvalidOperationException_NoElements();
-        return default;
     }
 }

@@ -42,12 +42,6 @@ public static partial class Spans
             if (typeof(T) == typeof(ulong))
                 return MemoryExtensions.LastIndexOf(UnsafeCast<T, ulong>(span), (ulong)(object)value!);
 
-            if (typeof(T) == typeof(nint))
-                return MemoryExtensions.LastIndexOf(UnsafeCast<T, nint>(span), (nint)(object)value!);
-
-            if (typeof(T) == typeof(nuint))
-                return MemoryExtensions.LastIndexOf(UnsafeCast<T, nuint>(span), (nuint)(object)value!);
-
             if (typeof(T) == typeof(float))
                 return MemoryExtensions.LastIndexOf(UnsafeCast<T, float>(span), (float)(object)value!);
 
@@ -94,12 +88,6 @@ public static partial class Spans
             if (typeof(T) == typeof(ulong))
                 return MemoryExtensions.LastIndexOf(UnsafeCast<T, ulong>(span), (ulong)(object)value!);
 
-            if (typeof(T) == typeof(nint))
-                return MemoryExtensions.LastIndexOf(UnsafeCast<T, nint>(span), (nint)(object)value!);
-
-            if (typeof(T) == typeof(nuint))
-                return MemoryExtensions.LastIndexOf(UnsafeCast<T, nuint>(span), (nuint)(object)value!);
-
             if (typeof(T) == typeof(float))
                 return MemoryExtensions.LastIndexOf(UnsafeCast<T, float>(span), (float)(object)value!);
 
@@ -132,27 +120,25 @@ public static partial class Spans
     {
         if (typeof(T).IsValueType && (comparer is null || comparer == EqualityComparer<T>.Default))
         {
-            for (nint i = (nint)length; i > 0;)
+            for (int i = length; i > 0;)
             {
-                // Use nint for arithmetic to avoid unnecessary 64->32->64 truncations.
                 i--;
 
                 // Let JIT de-virtualize `Equals` calls for value types.
-                if (EqualityComparer<T>.Default.Equals(value, Unsafe.Add(ref searchSpace, i)))
-                    return (int)i;
+                if (EqualityComparer<T>.Default.Equals(value!, Unsafe.Add(ref searchSpace, i)))
+                    return i;
             }
         }
         else
         {
             comparer ??= EqualityComparer<T>.Default;
 
-            for (nint i = (nint)length; i > 0;)
+            for (int i = length; i > 0;)
             {
-                // Use nint for arithmetic to avoid unnecessary 64->32->64 truncations.
                 i--;
 
-                if (comparer.Equals(value, Unsafe.Add(ref searchSpace, i)))
-                    return (int)i;
+                if (comparer.Equals(value!, Unsafe.Add(ref searchSpace, i)))
+                    return i;
             }
         }
 
@@ -172,26 +158,24 @@ public static partial class Spans
         if (value is not null)
         {
             // Use IEquatable<T>.Equals on structs/non-null values.
-            for (nint i = (nint)length; i > 0;)
+            for (int i = length; i > 0;)
             {
-                // Use nint for arithmetic to avoid unnecessary 64->32->64 truncations.
                 i--;
 
                 // Let JIT de-virtualize `Equals` calls for value types.
                 if (((IEquatable<T>)value).Equals(Unsafe.Add(ref searchSpace, i)))
-                    return (int)i;
+                    return i;
             }
         }
         else
         {
             // Otherwise, search for null.
-            for (nint i = (nint)length; i > 0;)
+            for (int i = length; i > 0;)
             {
-                // Use nint for arithmetic to avoid unnecessary 64->32->64 truncations.
                 i--;
 
                 if (Unsafe.Add(ref searchSpace, i) is null)
-                    return (int)i;
+                    return i;
             }
         }
 

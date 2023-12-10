@@ -1,3 +1,5 @@
+using System.Collections;
+
 namespace Spanned.Collections.Generic;
 
 /// <summary>
@@ -43,19 +45,6 @@ internal readonly ref struct ValueEnumerable<T>
     {
         _enumerable = null;
         _span = new(array);
-    }
-
-    /// <summary>
-    /// Initializes a new instance of the <see cref="ValueEnumerable{T}"/> struct.
-    /// </summary>
-    /// <param name="list">
-    /// The list to create the <see cref="ValueEnumerable{T}"/> from.
-    /// </param>
-    [MethodImpl(MethodImplOptions.AggressiveInlining)]
-    public ValueEnumerable(List<T>? list)
-    {
-        _enumerable = null;
-        _span = CollectionsMarshal.AsSpan(list);
     }
 
     /// <summary>
@@ -294,6 +283,19 @@ internal static class ValueEnumerable
             return true;
         }
 
-        return source._enumerable.TryGetNonEnumeratedCount(out count);
+        if (source._enumerable is ICollection<TSource> collection)
+        {
+            count = collection.Count;
+            return true;
+        }
+
+        if (source._enumerable is ICollection nonGenericCollection)
+        {
+            count = nonGenericCollection.Count;
+            return true;
+        }
+
+        count = 0;
+        return false;
     }
 }

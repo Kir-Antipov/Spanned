@@ -14,7 +14,7 @@ internal readonly ref struct ValueBitArray
     /// <summary>
     /// The reference to the start of the <see cref="ValueBitArray"/>.
     /// </summary>
-    private readonly ref int _start;
+    private readonly Span<int> _ints;
 
     /// <summary>
     /// The number of bits contained in the <see cref="ValueBitArray"/>.
@@ -36,7 +36,7 @@ internal readonly ref struct ValueBitArray
     /// <param name="ints">The span of <see cref="int"/>s to create a bit array from.</param>
     public ValueBitArray(Span<int> ints)
     {
-        _start = ref MemoryMarshal.GetReference(ints);
+        _ints = ints;
         _length = checked(ints.Length * BitsPerInt32);
     }
 
@@ -93,7 +93,7 @@ internal readonly ref struct ValueBitArray
             uint bitIndex = (uint)index % BitsPerInt32;
             int bitMask = 1 << (int)bitIndex;
 
-            ref int intValue = ref Unsafe.Add(ref _start, (nint)intIndex);
+            ref int intValue = ref Unsafe.Add(ref MemoryMarshal.GetReference(_ints), (nint)intIndex);
             intValue = value ? (intValue | bitMask) : (intValue & ~bitMask);
         }
 
@@ -106,18 +106,14 @@ internal readonly ref struct ValueBitArray
             uint bitIndex = (uint)index % BitsPerInt32;
             int bitMask = 1 << (int)bitIndex;
 
-            return (Unsafe.Add(ref _start, (nint)intIndex) & bitMask) != 0;
+            return (Unsafe.Add(ref MemoryMarshal.GetReference(_ints), (nint)intIndex) & bitMask) != 0;
         }
     }
 
     /// <summary>
     /// Clears all the bits in the bit array.
     /// </summary>
-    public void Clear()
-    {
-        Span<int> bytes = MemoryMarshal.CreateSpan(ref _start, _length / BitsPerInt32);
-        bytes.Clear();
-    }
+    public void Clear() => _ints.Clear();
 
     /// <summary>
     /// Converts this instance to a boolean array.

@@ -1,7 +1,7 @@
 <Project Sdk="Microsoft.NET.Sdk">
 
   <PropertyGroup>
-    <TargetFrameworks>net8.0</TargetFrameworks>
+    <TargetFrameworks>netstandard2.1</TargetFrameworks>
   </PropertyGroup>
 
   <PropertyGroup>
@@ -31,6 +31,10 @@
   </PropertyGroup>
 
   <ItemGroup>
+    <PackageReference Include="System.Runtime.CompilerServices.Unsafe" Version="6.0.0" />
+  </ItemGroup>
+
+  <ItemGroup>
     <Using Include="Spanned.Helpers" />
     <Using Include="System.Buffers" />
     <Using Include="System.ComponentModel" />
@@ -39,7 +43,6 @@
     <Using Include="System.Numerics" />
     <Using Include="System.Runtime.CompilerServices" />
     <Using Include="System.Runtime.InteropServices" />
-    <Using Include="System.Runtime.Intrinsics" />
   </ItemGroup>
 
   <ItemGroup>

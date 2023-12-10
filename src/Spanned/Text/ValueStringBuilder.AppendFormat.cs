@@ -1,171 +1,9 @@
-using System.Text;
 using Spanned.Collections.Generic;
 
 namespace Spanned.Text;
 
 public ref partial struct ValueStringBuilder
 {
-    /// <summary>
-    /// Appends the string returned by processing a composite format string, which contains zero or more format items, to this instance.
-    /// Each format item is replaced by the string representation of any of the arguments using a specified format provider.
-    /// </summary>
-    /// <typeparam name="TArg0">The type of the first object to format.</typeparam>
-    /// <param name="provider">An object that supplies culture-specific formatting information.</param>
-    /// <param name="format">A <see cref="CompositeFormat"/>.</param>
-    /// <param name="arg0">The first object to format.</param>
-    /// <exception cref="ArgumentNullException"><paramref name="format"/> is null.</exception>
-    /// <exception cref="FormatException">The index of a format item is greater than or equal to the number of supplied arguments.</exception>
-    public void AppendFormat<TArg0>(IFormatProvider? provider, CompositeFormat format, TArg0 arg0)
-    {
-        ThrowHelper.ThrowArgumentNullException_IfNull(format);
-
-        format.ValidateNumberOfArgs(1);
-        AppendFormatCore(provider, format, arg0, 0, 0, default);
-    }
-
-    /// <summary>
-    /// Appends the string returned by processing a composite format string, which contains zero or more format items, to this instance.
-    /// Each format item is replaced by the string representation of any of the arguments using a specified format provider.
-    /// </summary>
-    /// <typeparam name="TArg0">The type of the first object to format.</typeparam>
-    /// <typeparam name="TArg1">The type of the second object to format.</typeparam>
-    /// <param name="provider">An object that supplies culture-specific formatting information.</param>
-    /// <param name="format">A <see cref="CompositeFormat"/>.</param>
-    /// <param name="arg0">The first object to format.</param>
-    /// <param name="arg1">The second object to format.</param>
-    /// <exception cref="ArgumentNullException"><paramref name="format"/> is null.</exception>
-    /// <exception cref="FormatException">The index of a format item is greater than or equal to the number of supplied arguments.</exception>
-    public void AppendFormat<TArg0, TArg1>(IFormatProvider? provider, CompositeFormat format, TArg0 arg0, TArg1 arg1)
-    {
-        ThrowHelper.ThrowArgumentNullException_IfNull(format);
-
-        format.ValidateNumberOfArgs(2);
-        AppendFormatCore(provider, format, arg0, arg1, 0, default);
-    }
-
-    /// <summary>
-    /// Appends the string returned by processing a composite format string, which contains zero or more format items, to this instance.
-    /// Each format item is replaced by the string representation of any of the arguments using a specified format provider.
-    /// </summary>
-    /// <typeparam name="TArg0">The type of the first object to format.</typeparam>
-    /// <typeparam name="TArg1">The type of the second object to format.</typeparam>
-    /// <typeparam name="TArg2">The type of the third object to format.</typeparam>
-    /// <param name="provider">An object that supplies culture-specific formatting information.</param>
-    /// <param name="format">A <see cref="CompositeFormat"/>.</param>
-    /// <param name="arg0">The first object to format.</param>
-    /// <param name="arg1">The second object to format.</param>
-    /// <param name="arg2">The third object to format.</param>
-    /// <exception cref="ArgumentNullException"><paramref name="format"/> is null.</exception>
-    /// <exception cref="FormatException">The index of a format item is greater than or equal to the number of supplied arguments.</exception>
-    public void AppendFormat<TArg0, TArg1, TArg2>(IFormatProvider? provider, CompositeFormat format, TArg0 arg0, TArg1 arg1, TArg2 arg2)
-    {
-        ThrowHelper.ThrowArgumentNullException_IfNull(format);
-
-        format.ValidateNumberOfArgs(3);
-        AppendFormatCore(provider, format, arg0, arg1, arg2, default);
-    }
-
-    /// <summary>
-    /// Appends the string returned by processing a composite format string, which contains
-    /// zero or more format items, to this instance. Each format item is replaced by
-    /// the string representation of any of the arguments using a specified format provider.
-    /// </summary>
-    /// <param name="provider">An object that supplies culture-specific formatting information.</param>
-    /// <param name="format">A <see cref="CompositeFormat"/>.</param>
-    /// <param name="args">A span of objects to format.</param>
-    /// <exception cref="ArgumentNullException"><paramref name="format"/> or <paramref name="args"/> is null.</exception>
-    /// <exception cref="FormatException">The index of a format item is greater than or equal to the number of supplied arguments.</exception>
-    public void AppendFormat(IFormatProvider? provider, CompositeFormat format, params object?[] args)
-    {
-        ThrowHelper.ThrowArgumentNullException_IfNull(args);
-
-        AppendFormat(provider, format, (ReadOnlySpan<object?>)args);
-    }
-
-    /// <summary>
-    /// Appends the string returned by processing a composite format string, which contains
-    /// zero or more format items, to this instance. Each format item is replaced by
-    /// the string representation of any of the arguments using a specified format provider.
-    /// </summary>
-    /// <param name="provider">An object that supplies culture-specific formatting information.</param>
-    /// <param name="format">A <see cref="CompositeFormat"/>.</param>
-    /// <param name="args">A span of objects to format.</param>
-    /// <exception cref="ArgumentNullException"><paramref name="format"/> is null.</exception>
-    /// <exception cref="FormatException">The index of a format item is greater than or equal to the number of supplied arguments.</exception>
-    public void AppendFormat(IFormatProvider? provider, CompositeFormat format, scoped ReadOnlySpan<object?> args)
-    {
-        ThrowHelper.ThrowArgumentNullException_IfNull(format);
-
-        format.ValidateNumberOfArgs(args.Length);
-        switch (args.Length)
-        {
-            case 0:
-                AppendFormatCore(provider, format, (object?)null, (object?)null, (object?)null, args);
-                return;
-
-            case 1:
-                AppendFormatCore(provider, format, args[0], (object?)null, (object?)null, args);
-                return;
-
-            case 2:
-                AppendFormatCore(provider, format, args[0], args[1], (object?)null, args);
-                return;
-
-            default:
-                AppendFormatCore(provider, format, args[0], args[1], args[2], args);
-                return;
-        }
-    }
-
-    /// <summary>
-    /// Appends the string returned by processing a composite format string, which contains
-    /// zero or more format items, to this instance. Each format item is replaced by
-    /// the string representation of any of the arguments using a specified format provider.
-    /// </summary>
-    /// <typeparam name="TArg0">The type of the first object to format.</typeparam>
-    /// <typeparam name="TArg1">The type of the second object to format.</typeparam>
-    /// <typeparam name="TArg2">The type of the third object to format.</typeparam>
-    /// <param name="provider">An object that supplies culture-specific formatting information.</param>
-    /// <param name="format">A <see cref="CompositeFormat"/>.</param>
-    /// <param name="arg0">The first object to format.</param>
-    /// <param name="arg1">The second object to format.</param>
-    /// <param name="arg2">The third object to format.</param>
-    /// <param name="args">A span of objects to format.</param>
-    private void AppendFormatCore<TArg0, TArg1, TArg2>(IFormatProvider? provider, CompositeFormat format, TArg0 arg0, TArg1 arg1, TArg2 arg2, scoped ReadOnlySpan<object?> args)
-    {
-        AppendInterpolatedStringHandler handler = new(format.LiteralLength(), format.FormattedCount(), this, provider);
-
-        foreach ((string? literal, int argIndex, int argAlignment, string? argFormat) in format.Segments())
-        {
-            if (literal is not null)
-            {
-                handler.AppendLiteral(literal);
-                continue;
-            }
-
-            switch (argIndex)
-            {
-                case 0:
-                    handler.AppendFormatted(arg0, argAlignment, argFormat);
-                    break;
-
-                case 1:
-                    handler.AppendFormatted(arg1, argAlignment, argFormat);
-                    break;
-
-                case 2:
-                    handler.AppendFormatted(arg2, argAlignment, argFormat);
-                    break;
-
-                default:
-                    handler.AppendFormatted(args[argIndex], argAlignment, argFormat);
-                    break;
-            }
-        }
-
-        this = handler._builder;
-    }
-
     /// <summary>
     /// Appends the string returned by processing a composite format string, which contains
     /// zero or more format items, to this instance. Each format item is replaced by
@@ -467,7 +305,7 @@ public ref partial struct ValueStringBuilder
             if (ch != '}')
             {
                 // Continue consuming optional additional digits.
-                while (char.IsAsciiDigit(ch) && index < IndexLimit)
+                while (IsAsciiDigit(ch) && index < IndexLimit)
                 {
                     index = index * 10 + ch - '0';
                     ch = MoveNext(format, ref pos);
@@ -508,7 +346,7 @@ public ref partial struct ValueStringBuilder
                         ThrowHelper.ThrowFormatException_ExpectedAsciiDigit();
                     }
                     ch = MoveNext(format, ref pos);
-                    while (char.IsAsciiDigit(ch) && width < WidthLimit)
+                    while (IsAsciiDigit(ch) && width < WidthLimit)
                     {
                         width = width * 10 + ch - '0';
                         ch = MoveNext(format, ref pos);
@@ -580,34 +418,8 @@ public ref partial struct ValueStringBuilder
 
             if (s == null)
             {
-                // If arg is ISpanFormattable and the beginning doesn't need padding,
-                // try formatting it into the remaining current chunk.
                 Span<char> destination = _buffer.Slice(_length);
-                if ((leftJustify || width == 0) &&
-                    arg is ISpanFormattable spanFormattableArg &&
-                    spanFormattableArg.TryFormat(destination, out int charsWritten, itemFormatSpan, provider))
-                {
-                    if ((uint)charsWritten > (uint)destination.Length)
-                    {
-                        // Untrusted ISpanFormattable implementations might return an erroneous charsWritten value,
-                        // and m_ChunkLength might end up being used in Unsafe code, so fail if we get back an
-                        // out-of-range charsWritten value.
-                        ThrowHelper.ThrowFormatException_InvalidString();
-                    }
 
-                    _length += charsWritten;
-
-                    // Pad the end, if needed.
-                    if (leftJustify && width > charsWritten)
-                    {
-                        Append(' ', width - charsWritten);
-                    }
-
-                    // Continue to parse other characters.
-                    continue;
-                }
-
-                // Otherwise, fallback to trying IFormattable or calling ToString.
                 if (arg is IFormattable formattableArg)
                 {
                     if (itemFormatSpan.Length != 0)
@@ -642,6 +454,8 @@ public ref partial struct ValueStringBuilder
 
             // Continue parsing the rest of the format string.
         }
+
+        static bool IsAsciiDigit(char c) => (uint)(c - '0') <= 9u;
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         static char MoveNext(string format, ref int pos)

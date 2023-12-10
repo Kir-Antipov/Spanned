@@ -96,7 +96,7 @@ public ref partial struct ValueStringBuilder
             Grow(value.Length);
         }
 
-        value.CopyTo(_buffer.Slice(length));
+        value.AsSpan().CopyTo(_buffer.Slice(length));
         _length = length + value.Length;
     }
 
@@ -186,7 +186,7 @@ public ref partial struct ValueStringBuilder
             Grow(valueCount);
         }
 
-        MemoryMarshal.CreateReadOnlySpan(in value, valueCount).CopyTo(_buffer.Slice(length));
+        MemoryMarshal.CreateReadOnlySpan(ref Unsafe.AsRef(in value), valueCount).CopyTo(_buffer.Slice(length));
         _length = length + valueCount;
     }
 
@@ -260,7 +260,12 @@ public ref partial struct ValueStringBuilder
     /// </summary>
     /// <param name="value">The object to append.</param>
     public void Append(object? value)
-        => Append<object?>(value);
+    {
+        if (value is not null)
+        {
+            Append(value.ToString());
+        }
+    }
 
     /// <summary>
     /// Appends the string representation of a specified <see cref="bool"/> value to this instance.
@@ -538,66 +543,6 @@ public ref partial struct ValueStringBuilder
     }
 
     /// <summary>
-    /// Appends the string representation of a specified object to this instance.
-    /// </summary>
-    /// <typeparam name="T">The type of the value to append.</typeparam>
-    /// <param name="value">The object to append.</param>
-    public void Append<T>(T? value)
-    {
-        if (typeof(T).IsEnum)
-        {
-            // Stephen Toub, https://github.com/dotnet/runtime/issues/57881#issuecomment-903248743:
-            // These were added as instance TryFormat methods, implementing the ISpanFormattable interface.
-            // Enum could do that as well, but without assistance from the JIT it'll incur some of the same overheads
-            // you're seeing in your STR_Parse_text benchmark: those allocations are for boxing the enum
-            // in order to call ToString (for the known enum values, ToString itself won't allocate).
-            //
-            // Stephen Toub, https://github.com/dotnet/runtime/pull/78580#issue-1455927685:
-            // And then that Enum.TryFormat is used in multiple interpolated string handlers to avoid boxing the enum;
-            // today it'll be boxed as part of using its IFormattable implementation, and with this change,
-            // it both won’t be boxed and will call through the optimized generic path. This uses typeof(T).IsEnum,
-            // which is now a JIT intrinsic that'll become a const true/false.
-            //
-            // Basically, we special-case enums, even though they [explicitly] implement ISpanFormattable, to avoid boxing.
-            // Sadly, we cannot use `Enum.TryFormat` directly since there's currently no way to "bridge" generic constraints.
-            // Thankfully, we now have the `UnsafeAccessorAttribute`, so we can call its unconstrained internal version.
-            if (EnumHelper.TryFormatUnconstrained(value, _buffer.Slice(_length), out int charsWritten))
-            {
-                _length += charsWritten;
-            }
-            else
-            {
-                FormatAndAppend(value, format: null, provider: null);
-            }
-        }
-        else if (value is ISpanFormattable)
-        {
-            Span<char> destination = _buffer.Slice(_length);
-            if (((ISpanFormattable)value).TryFormat(destination, out int charsWritten, format: default, provider: null))
-            {
-                // Protect against faulty ISpanFormattable implementations.
-                // We don't want to destabilize a structure that might operate on data allocated on the stack.
-                if ((uint)charsWritten > (uint)destination.Length)
-                {
-                    ThrowHelper.ThrowFormatException_InvalidString();
-                }
-
-                _length += charsWritten;
-            }
-            else
-            {
-                // ValueStringBuilder doesn't have enough space for the current value.
-                // Therefore, we first format it separately into a temporary buffer, and then append it to the builder.
-                FormatAndAppend(value, format: null, provider: null);
-            }
-        }
-        else if (value is not null)
-        {
-            Append(value.ToString());
-        }
-    }
-
-    /// <summary>
     /// Appends a formatted representation of the specified value to this instance.
     /// </summary>
     /// <typeparam name="T">The type of the value to append.</typeparam>
@@ -624,57 +569,7 @@ public ref partial struct ValueStringBuilder
         // Only if they implement both we end up paying for an extra interface check.
         if (value is IFormattable)
         {
-            if (typeof(T).IsEnum)
-            {
-                // Stephen Toub, https://github.com/dotnet/runtime/issues/57881#issuecomment-903248743:
-                // These were added as instance TryFormat methods, implementing the ISpanFormattable interface.
-                // Enum could do that as well, but without assistance from the JIT it'll incur some of the same overheads
-                // you're seeing in your STR_Parse_text benchmark: those allocations are for boxing the enum
-                // in order to call ToString (for the known enum values, ToString itself won't allocate).
-                //
-                // Stephen Toub, https://github.com/dotnet/runtime/pull/78580#issue-1455927685:
-                // And then that Enum.TryFormat is used in multiple interpolated string handlers to avoid boxing the enum;
-                // today it'll be boxed as part of using its IFormattable implementation, and with this change,
-                // it both won’t be boxed and will call through the optimized generic path. This uses typeof(T).IsEnum,
-                // which is now a JIT intrinsic that'll become a const true/false.
-                //
-                // Basically, we special-case enums, even though they [explicitly] implement ISpanFormattable, to avoid boxing.
-                // Sadly, we cannot use `Enum.TryFormat` directly since there's currently no way to "bridge" generic constraints.
-                // Thankfully, we now have the `UnsafeAccessorAttribute`, so we can call its unconstrained internal version.
-                if (EnumHelper.TryFormatUnconstrained(value, _buffer.Slice(_length), out int charsWritten, format))
-                {
-                    _length += charsWritten;
-                }
-                else
-                {
-                    FormatAndAppend(value, format, provider);
-                }
-            }
-            else if (value is ISpanFormattable)
-            {
-                Span<char> destination = _buffer.Slice(_length);
-                if (((ISpanFormattable)value).TryFormat(destination, out int charsWritten, format, provider))
-                {
-                    // Protect against faulty ISpanFormattable implementations.
-                    // We don't want to destabilize a structure that might operate on data allocated on the stack.
-                    if ((uint)charsWritten > (uint)destination.Length)
-                    {
-                        ThrowHelper.ThrowFormatException_InvalidString();
-                    }
-
-                    _length += charsWritten;
-                }
-                else
-                {
-                    // ValueStringBuilder doesn't have enough space for the current value.
-                    // Therefore, we first format it separately into a temporary buffer, and then append it to the builder.
-                    FormatAndAppend(value, format, provider);
-                }
-            }
-            else
-            {
-                Append(((IFormattable)value).ToString(format, provider));
-            }
+            Append(((IFormattable)value).ToString(format, provider));
         }
         else if (value is not null)
         {
@@ -692,31 +587,10 @@ public ref partial struct ValueStringBuilder
     /// <remarks>
     /// This method does not support custom formatters.
     /// </remarks>
-    [SkipLocalsInit] // 256 * sizeof(char) == 0.5 KiB, that's a lot to init for nothing.
     private void FormatAndAppend<T>(T? value, string? format, IFormatProvider? provider)
     {
-        Span<char> chars = stackalloc char[StringHelper.StackallocCharBufferSizeLimit];
-        int charsWritten = 0;
-
         if (value is IFormattable)
         {
-            if (typeof(T).IsEnum)
-            {
-                if (EnumHelper.TryFormatUnconstrained(value, chars, out charsWritten, format))
-                {
-                    Append(chars.Slice(0, charsWritten));
-                    return;
-                }
-            }
-            else if (value is ISpanFormattable)
-            {
-                if (((ISpanFormattable)value).TryFormat(chars, out charsWritten, format, provider))
-                {
-                    Append(chars.Slice(0, charsWritten));
-                    return;
-                }
-            }
-
             Append(((IFormattable)value).ToString(format, provider));
         }
         else if (value is not null)

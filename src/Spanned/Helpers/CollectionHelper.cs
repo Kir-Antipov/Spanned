@@ -8,9 +8,6 @@ internal static class CollectionHelper
     /// <summary>
     /// The maximum allowed capacity for a collection.
     /// </summary>
-    /// <remarks>
-    /// Represents the same value as <see cref="Array.MaxLength"/>.
-    /// </remarks>
     public const int MaxCapacity = 0x7FFFFFC7;
 
     /// <summary>

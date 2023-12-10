@@ -146,9 +146,10 @@ public ref partial struct ValueStringBuilder
             _buffer.Slice(index, remaining).CopyTo(_buffer.Slice(index + count));
         }
 
+        ReadOnlySpan<char> valueSpan = value.AsSpan();
         for (int i = 0; i < repeatCount; i++)
         {
-            value.CopyTo(_buffer.Slice(index + i * value.Length));
+            valueSpan.CopyTo(_buffer.Slice(index + i * value.Length));
         }
 
         _length += count;
@@ -305,7 +306,12 @@ public ref partial struct ValueStringBuilder
     /// <param name="value">The value to insert.</param>
     /// <inheritdoc cref="ThrowHelper.ThrowArgumentOutOfRangeException_IfInvalidIndex(int, int)"/>
     public void Insert(int index, object? value)
-        => Insert<object?>(index, value);
+    {
+        if (value is not null)
+        {
+            Insert(index, value.ToString());
+        }
+    }
 
     /// <summary>
     /// Inserts the string representation of a Boolean value into this instance at the
@@ -611,26 +617,6 @@ public ref partial struct ValueStringBuilder
     }
 
     /// <summary>
-    /// Inserts the string representation of a specified object into this instance
-    /// at the specified character position.
-    /// </summary>
-    /// <typeparam name="T">The type of the value to insert.</typeparam>
-    /// <param name="index">The position in this instance where insertion begins.</param>
-    /// <param name="value">The value to insert.</param>
-    /// <inheritdoc cref="ThrowHelper.ThrowArgumentOutOfRangeException_IfInvalidIndex(int, int)"/>
-    public void Insert<T>(int index, T? value)
-    {
-        if (typeof(T).IsEnum || value is ISpanFormattable)
-        {
-            FormatAndInsert(index, value, format: null, provider: null);
-        }
-        else if (value is not null)
-        {
-            Insert(index, value.ToString());
-        }
-    }
-
-    /// <summary>
     /// Inserts a formatted representation of the specified value into this instance
     /// at the specified character position.
     /// </summary>
@@ -649,25 +635,9 @@ public ref partial struct ValueStringBuilder
             return;
         }
 
-        // First, check for `IFormattable`, even though `ISpanFormattable` is preferred. The latter
-        // requires the former anyway.
-        //
-        // For value types, it won't matter since the type checks become JIT-time constants.
-        //
-        // For reference types, it's more probable they implement `IFormattable` over `ISpanFormattable`.
-        // So, if they don't implement either, we save an interface check over first checking for `ISpanFormattable`
-        // and then for `IFormattable`, and if they only implement `IFormattable`, we come out even.
-        // Only if they implement both we end up paying for an extra interface check.
         if (value is IFormattable)
         {
-            if (typeof(T).IsEnum || value is ISpanFormattable)
-            {
-                FormatAndInsert(index, value, format, provider);
-            }
-            else
-            {
-                Insert(index, ((IFormattable)value).ToString(format, provider));
-            }
+            Insert(index, ((IFormattable)value).ToString(format, provider));
         }
         else if (value is not null)
         {
@@ -687,31 +657,10 @@ public ref partial struct ValueStringBuilder
     /// <remarks>
     /// This method does not support custom formatters.
     /// </remarks>
-    [SkipLocalsInit] // 256 * sizeof(char) == 0.5 KiB, that's a lot to init for nothing.
     private void FormatAndInsert<T>(int index, T? value, string? format, IFormatProvider? provider)
     {
-        Span<char> chars = stackalloc char[StringHelper.StackallocCharBufferSizeLimit];
-        int charsWritten = 0;
-
         if (value is IFormattable)
         {
-            if (typeof(T).IsEnum)
-            {
-                if (EnumHelper.TryFormatUnconstrained(value, chars, out charsWritten, format))
-                {
-                    Insert(index, chars.Slice(0, charsWritten));
-                    return;
-                }
-            }
-            else if (value is ISpanFormattable)
-            {
-                if (((ISpanFormattable)value).TryFormat(chars, out charsWritten, format, provider))
-                {
-                    Insert(index, chars.Slice(0, charsWritten));
-                    return;
-                }
-            }
-
             Insert(index, ((IFormattable)value).ToString(format, provider));
         }
         else if (value is not null)

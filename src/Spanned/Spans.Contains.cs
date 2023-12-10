@@ -19,43 +19,37 @@ public static partial class Spans
         if (comparer is null || comparer == EqualityComparer<T>.Default)
         {
             if (typeof(T) == typeof(byte))
-                return MemoryExtensions.Contains(UnsafeCast<T, byte>(span), (byte)(object)value!);
+                return MemoryExtensions.IndexOf(UnsafeCast<T, byte>(span), (byte)(object)value!) >= 0;
 
             if (typeof(T) == typeof(sbyte))
-                return MemoryExtensions.Contains(UnsafeCast<T, sbyte>(span), (sbyte)(object)value!);
+                return MemoryExtensions.IndexOf(UnsafeCast<T, sbyte>(span), (sbyte)(object)value!) >= 0;
 
             if (typeof(T) == typeof(short))
-                return MemoryExtensions.Contains(UnsafeCast<T, short>(span), (short)(object)value!);
+                return MemoryExtensions.IndexOf(UnsafeCast<T, short>(span), (short)(object)value!) >= 0;
 
             if (typeof(T) == typeof(ushort))
-                return MemoryExtensions.Contains(UnsafeCast<T, ushort>(span), (ushort)(object)value!);
+                return MemoryExtensions.IndexOf(UnsafeCast<T, ushort>(span), (ushort)(object)value!) >= 0;
 
             if (typeof(T) == typeof(int))
-                return MemoryExtensions.Contains(UnsafeCast<T, int>(span), (int)(object)value!);
+                return MemoryExtensions.IndexOf(UnsafeCast<T, int>(span), (int)(object)value!) >= 0;
 
             if (typeof(T) == typeof(uint))
-                return MemoryExtensions.Contains(UnsafeCast<T, uint>(span), (uint)(object)value!);
+                return MemoryExtensions.IndexOf(UnsafeCast<T, uint>(span), (uint)(object)value!) >= 0;
 
             if (typeof(T) == typeof(long))
-                return MemoryExtensions.Contains(UnsafeCast<T, long>(span), (long)(object)value!);
+                return MemoryExtensions.IndexOf(UnsafeCast<T, long>(span), (long)(object)value!) >= 0;
 
             if (typeof(T) == typeof(ulong))
-                return MemoryExtensions.Contains(UnsafeCast<T, ulong>(span), (ulong)(object)value!);
-
-            if (typeof(T) == typeof(nint))
-                return MemoryExtensions.Contains(UnsafeCast<T, nint>(span), (nint)(object)value!);
-
-            if (typeof(T) == typeof(nuint))
-                return MemoryExtensions.Contains(UnsafeCast<T, nuint>(span), (nuint)(object)value!);
+                return MemoryExtensions.IndexOf(UnsafeCast<T, ulong>(span), (ulong)(object)value!) >= 0;
 
             if (typeof(T) == typeof(float))
-                return MemoryExtensions.Contains(UnsafeCast<T, float>(span), (float)(object)value!);
+                return MemoryExtensions.IndexOf(UnsafeCast<T, float>(span), (float)(object)value!) >= 0;
 
             if (typeof(T) == typeof(double))
-                return MemoryExtensions.Contains(UnsafeCast<T, double>(span), (double)(object)value!);
+                return MemoryExtensions.IndexOf(UnsafeCast<T, double>(span), (double)(object)value!) >= 0;
 
             if (typeof(T) == typeof(char))
-                return MemoryExtensions.Contains(UnsafeCast<T, char>(span), (char)(object)value!);
+                return MemoryExtensions.IndexOf(UnsafeCast<T, char>(span), (char)(object)value!) >= 0;
 
             if (value is IEquatable<T>)
                 return IndexOfEquatable(ref MemoryMarshal.GetReference(span), span.Length, value) >= 0;
@@ -71,43 +65,37 @@ public static partial class Spans
         if (comparer is null || comparer == EqualityComparer<T>.Default)
         {
             if (typeof(T) == typeof(byte))
-                return MemoryExtensions.Contains(UnsafeCast<T, byte>(span), (byte)(object)value!);
+                return MemoryExtensions.IndexOf(UnsafeCast<T, byte>(span), (byte)(object)value!) >= 0;
 
             if (typeof(T) == typeof(sbyte))
-                return MemoryExtensions.Contains(UnsafeCast<T, sbyte>(span), (sbyte)(object)value!);
+                return MemoryExtensions.IndexOf(UnsafeCast<T, sbyte>(span), (sbyte)(object)value!) >= 0;
 
             if (typeof(T) == typeof(short))
-                return MemoryExtensions.Contains(UnsafeCast<T, short>(span), (short)(object)value!);
+                return MemoryExtensions.IndexOf(UnsafeCast<T, short>(span), (short)(object)value!) >= 0;
 
             if (typeof(T) == typeof(ushort))
-                return MemoryExtensions.Contains(UnsafeCast<T, ushort>(span), (ushort)(object)value!);
+                return MemoryExtensions.IndexOf(UnsafeCast<T, ushort>(span), (ushort)(object)value!) >= 0;
 
             if (typeof(T) == typeof(int))
-                return MemoryExtensions.Contains(UnsafeCast<T, int>(span), (int)(object)value!);
+                return MemoryExtensions.IndexOf(UnsafeCast<T, int>(span), (int)(object)value!) >= 0;
 
             if (typeof(T) == typeof(uint))
-                return MemoryExtensions.Contains(UnsafeCast<T, uint>(span), (uint)(object)value!);
+                return MemoryExtensions.IndexOf(UnsafeCast<T, uint>(span), (uint)(object)value!) >= 0;
 
             if (typeof(T) == typeof(long))
-                return MemoryExtensions.Contains(UnsafeCast<T, long>(span), (long)(object)value!);
+                return MemoryExtensions.IndexOf(UnsafeCast<T, long>(span), (long)(object)value!) >= 0;
 
             if (typeof(T) == typeof(ulong))
-                return MemoryExtensions.Contains(UnsafeCast<T, ulong>(span), (ulong)(object)value!);
-
-            if (typeof(T) == typeof(nint))
-                return MemoryExtensions.Contains(UnsafeCast<T, nint>(span), (nint)(object)value!);
-
-            if (typeof(T) == typeof(nuint))
-                return MemoryExtensions.Contains(UnsafeCast<T, nuint>(span), (nuint)(object)value!);
+                return MemoryExtensions.IndexOf(UnsafeCast<T, ulong>(span), (ulong)(object)value!) >= 0;
 
             if (typeof(T) == typeof(float))
-                return MemoryExtensions.Contains(UnsafeCast<T, float>(span), (float)(object)value!);
+                return MemoryExtensions.IndexOf(UnsafeCast<T, float>(span), (float)(object)value!) >= 0;
 
             if (typeof(T) == typeof(double))
-                return MemoryExtensions.Contains(UnsafeCast<T, double>(span), (double)(object)value!);
+                return MemoryExtensions.IndexOf(UnsafeCast<T, double>(span), (double)(object)value!) >= 0;
 
             if (typeof(T) == typeof(char))
-                return MemoryExtensions.Contains(UnsafeCast<T, char>(span), (char)(object)value!);
+                return MemoryExtensions.IndexOf(UnsafeCast<T, char>(span), (char)(object)value!) >= 0;
 
             if (value is IEquatable<T>)
                 return IndexOfEquatable(ref MemoryMarshal.GetReference(span), span.Length, value) >= 0;

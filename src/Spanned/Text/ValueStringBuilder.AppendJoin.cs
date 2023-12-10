@@ -19,7 +19,7 @@ public ref partial struct ValueStringBuilder
     public void AppendJoin<T>(string? separator, scoped ReadOnlySpan<T> values)
     {
         separator ??= string.Empty;
-        AppendJoinCore(in separator.GetPinnableReference(), separator.Length, values);
+        AppendJoinCore(ref MemoryMarshal.GetReference(separator.AsSpan()), separator.Length, values);
     }
 
     /// <summary>
@@ -38,7 +38,7 @@ public ref partial struct ValueStringBuilder
     /// </param>
     public void AppendJoin<T>(char separator, scoped ReadOnlySpan<T> values)
     {
-        AppendJoinCore(in separator, 1, values);
+        AppendJoinCore(ref separator, 1, values);
     }
 
     /// <summary>
@@ -58,16 +58,16 @@ public ref partial struct ValueStringBuilder
     /// <exception cref="ArgumentNullException"><paramref name="values"/> is a <c>null</c>.</exception>
     public void AppendJoin<T>(string? separator, IEnumerable<T> values)
     {
-        ArgumentNullException.ThrowIfNull(values);
+        ThrowHelper.ThrowArgumentNullException_IfNull(values);
 
         separator ??= string.Empty;
         if (values.TryGetSpan(out ReadOnlySpan<T> span))
         {
-            AppendJoinCore(in separator.GetPinnableReference(), separator.Length, span);
+            AppendJoinCore(ref MemoryMarshal.GetReference(separator.AsSpan()), separator.Length, span);
         }
         else
         {
-            AppendJoinCore(in separator.GetPinnableReference(), separator.Length, values);
+            AppendJoinCore(ref MemoryMarshal.GetReference(separator.AsSpan()), separator.Length, values);
         }
     }
 
@@ -92,11 +92,11 @@ public ref partial struct ValueStringBuilder
 
         if (values.TryGetSpan(out ReadOnlySpan<T> span))
         {
-            AppendJoinCore(in separator, 1, span);
+            AppendJoinCore(ref separator, 1, span);
         }
         else
         {
-            AppendJoinCore(in separator, 1, values);
+            AppendJoinCore(ref separator, 1, values);
         }
     }
 
@@ -120,7 +120,7 @@ public ref partial struct ValueStringBuilder
         ThrowHelper.ThrowArgumentNullException_IfNull(values);
 
         separator ??= string.Empty;
-        AppendJoinCore(in separator.GetPinnableReference(), separator.Length, (ReadOnlySpan<string?>)values);
+        AppendJoinCore(ref MemoryMarshal.GetReference(separator.AsSpan()), separator.Length, (ReadOnlySpan<string?>)values);
     }
 
     /// <summary>
@@ -142,7 +142,7 @@ public ref partial struct ValueStringBuilder
     {
         ThrowHelper.ThrowArgumentNullException_IfNull(values);
 
-        AppendJoinCore(in separator, 1, (ReadOnlySpan<string?>)values);
+        AppendJoinCore(ref separator, 1, (ReadOnlySpan<string?>)values);
     }
 
     /// <summary>
@@ -165,7 +165,7 @@ public ref partial struct ValueStringBuilder
         ThrowHelper.ThrowArgumentNullException_IfNull(values);
 
         separator ??= string.Empty;
-        AppendJoinCore(in separator.GetPinnableReference(), separator.Length, (ReadOnlySpan<object?>)values);
+        AppendJoinCore(ref MemoryMarshal.GetReference(separator.AsSpan()), separator.Length, (ReadOnlySpan<object?>)values);
     }
 
     /// <summary>
@@ -187,7 +187,7 @@ public ref partial struct ValueStringBuilder
     {
         ThrowHelper.ThrowArgumentNullException_IfNull(values);
 
-        AppendJoinCore(in separator, 1, (ReadOnlySpan<object?>)values);
+        AppendJoinCore(ref separator, 1, (ReadOnlySpan<object?>)values);
     }
 
     /// <summary>
@@ -201,9 +201,9 @@ public ref partial struct ValueStringBuilder
     /// A collection that contains the objects to concatenate and append to the current
     /// instance of the string builder.
     /// </param>
-    private void AppendJoinCore<T>(in char separator, int separatorLength, IEnumerable<T> values)
+    private void AppendJoinCore<T>(ref char separator, int separatorLength, IEnumerable<T> values)
     {
-        Debug.Assert(!Unsafe.IsNullRef(ref Unsafe.AsRef(in separator)));
+        Debug.Assert(!Unsafe.IsNullRef(ref separator));
         Debug.Assert(separatorLength >= 0);
         Debug.Assert(values is not null);
 
@@ -242,9 +242,9 @@ public ref partial struct ValueStringBuilder
     /// A span that contains the objects to concatenate and append to the current
     /// instance of the string builder.
     /// </param>
-    private void AppendJoinCore<T>(in char separator, int separatorLength, scoped ReadOnlySpan<T> values)
+    private void AppendJoinCore<T>(ref char separator, int separatorLength, scoped ReadOnlySpan<T> values)
     {
-        Debug.Assert(!Unsafe.IsNullRef(ref Unsafe.AsRef(in separator)));
+        Debug.Assert(!Unsafe.IsNullRef(ref separator));
         Debug.Assert(separatorLength >= 0);
 
         if (values.Length == 0)

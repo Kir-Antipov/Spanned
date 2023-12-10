@@ -379,7 +379,7 @@ public ref partial struct ValueStringBuilder
     /// <param name="oldChar">The character to replace.</param>
     /// <param name="newChar">The character that replaces oldChar.</param>
     public readonly void Replace(char oldChar, char newChar)
-        => AsSpan().Replace(oldChar, newChar);
+        => Replace(oldChar, newChar, 0, _length);
 
     /// <summary>
     /// Replaces, within a substring of this instance, all occurrences of a specified
@@ -391,7 +391,17 @@ public ref partial struct ValueStringBuilder
     /// <param name="length">The length of the substring.</param>
     /// <inheritdoc cref="ThrowHelper.ThrowArgumentOutOfRangeException_IfInvalidRange(int, int, int)"/>
     public readonly void Replace(char oldChar, char newChar, int start, int length)
-        => AsSpan(start, length).Replace(oldChar, newChar);
+    {
+        Span<char> chars = AsSpan(start, length);
+
+        int i = chars.IndexOf(oldChar);
+        while (i >= 0)
+        {
+            chars[i] = newChar;
+            chars = chars.Slice(i + 1);
+            i = chars.IndexOf(oldChar);
+        }
+    }
 
     /// <summary>
     /// Replaces all occurrences of a specified string in this instance with another
@@ -450,13 +460,6 @@ public ref partial struct ValueStringBuilder
         ThrowHelper.ThrowArgumentOutOfRangeException_IfInvalidRange(start, length, _length);
         if (oldValue.IsEmpty)
             ThrowHelper.ThrowArgumentOutOfRangeException();
-
-        // Optimize a very common case, i.e., replacing single characters.
-        if (oldValue.Length is 1 && newValue.Length is 1)
-        {
-            _buffer.Slice(start, length).Replace(oldValue[0], newValue[0]);
-            return;
-        }
 
         int oldValueLength = oldValue.Length;
         int newValueLength = newValue.Length;
